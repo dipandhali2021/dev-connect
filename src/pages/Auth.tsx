@@ -1,43 +1,60 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Wallet, User, Code2, ChevronRight, Loader2 } from 'lucide-react';
-import { useWeb3 } from '../contexts/Web3Context';
 import { useAuth } from '../contexts/AuthContext';
 
 type UserRole = 'developer' | 'customer';
 
 export const Auth = () => {
   const navigate = useNavigate();
-  const { connectWallet, account, isConnecting } = useWeb3();
-  const { user, setUser, isAuthenticated } = useAuth();
+  const { login, connectWallet, checkWalletAuth, isAuthenticated, user } = useAuth();
   const [role, setRole] = useState<UserRole | null>(null);
+  const [name, setName] = useState('');
   const [age, setAge] = useState<string>('');
-  const [step, setStep] = useState(1);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate(user?.role === 'developer' ? '/developer/dashboard' : '/customer/dashboard');
-    }
-  }, [isAuthenticated, user, navigate]);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const handleConnect = async () => {
-    await connectWallet();
-    if (account) {
-      setStep(2);
+    try {
+      setIsConnecting(true);
+      const address = await connectWallet();
+      
+      // Check if user exists
+      const existingUser = await checkWalletAuth(address);
+      
+      if (existingUser) {
+        // User exists, proceed with login
+        await login();
+      } else {
+        // New user, show registration form
+        setShowForm(true);
+      }
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+    } finally {
+      setIsConnecting(false);
     }
   };
 
-  const handleSubmit = () => {
-    if (role && age && account) {
-      setUser({
-        address: account,
-        role: role,
-        age: parseInt(age, 10)
-      });
-      navigate(role === 'developer' ? '/developer/dashboard' : '/customer/dashboard');
+  const handleSubmit = async () => {
+    if (role && age && name) {
+      try {
+        await login({
+          role,
+          age: parseInt(age, 10),
+          name
+        });
+      } catch (error) {
+        console.error('Failed to register:', error);
+      }
     }
   };
+
+  if (isAuthenticated && user) {
+    navigate(user.role === 'developer' ? '/developer/dashboard' : '/customer/dashboard');
+    return null;
+  }
 
   return (
     <div className="min-h-screen pt-16 bg-gray-50 dark:bg-dark-200">
@@ -50,16 +67,16 @@ export const Auth = () => {
           <div className="p-6 md:p-8">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                {step === 1 ? 'Connect Your Wallet' : 'Complete Your Profile'}
+                {!showForm ? 'Connect Your Wallet' : 'Complete Your Profile'}
               </h2>
               <p className="text-gray-600 dark:text-primary-100">
-                {step === 1
+                {!showForm
                   ? 'Connect with MetaMask to continue'
-                  : 'Choose your role and enter your age'}
+                  : 'Choose your role and enter your details'}
               </p>
             </div>
 
-            {step === 1 ? (
+            {!showForm ? (
               <button
                 onClick={handleConnect}
                 disabled={isConnecting}
@@ -74,6 +91,19 @@ export const Auth = () => {
               </button>
             ) : (
               <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-primary-100 mb-2">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-dark-200 border border-gray-300 dark:border-primary-600/30 text-gray-900 dark:text-white px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
+                    placeholder="Enter your name"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-primary-100 mb-2">
                     Select Role
@@ -125,7 +155,7 @@ export const Auth = () => {
 
                 <button
                   onClick={handleSubmit}
-                  disabled={!role || !age}
+                  disabled={!role || !age || !name}
                   className="w-full bg-primary-600 text-white py-4 rounded-xl hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span>Continue</span>

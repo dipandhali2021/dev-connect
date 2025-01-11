@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Code2, Menu, X, LogOut } from 'lucide-react';
+import { Code2, Menu, X, LogOut, User, ChevronDown } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuth } from '../contexts/AuthContext';
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   return (
@@ -44,13 +49,52 @@ export const Navbar = () => {
                 >
                   Dashboard
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 text-gray-600 dark:text-primary-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span>Logout</span>
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-dark-200 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-300 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-primary-600/10 rounded-full flex items-center justify-center">
+                        <User className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                          {formatAddress(user.address)}
+                        </span>
+                        <span className="text-xs text-primary-600 dark:text-primary-400 capitalize">
+                          {user.role}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-gray-500 dark:text-primary-100" />
+                  </button>
+
+                  {showProfileMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-100 rounded-xl shadow-lg border border-gray-200 dark:border-primary-600/20 overflow-hidden"
+                    >
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-2 px-4 py-3 text-gray-700 dark:text-primary-100 hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors"
+                      >
+                        <User className="w-4 h-4" />
+                        <span>Profile</span>
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Logout</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </div>
+                <ThemeToggle />
               </>
             ) : (
               <>
@@ -60,9 +104,9 @@ export const Navbar = () => {
                 >
                   Login
                 </Link>
+                <ThemeToggle />
               </>
             )}
-            <ThemeToggle />
           </div>
 
           {/* Mobile menu button */}
@@ -107,9 +151,15 @@ export const Navbar = () => {
               >
                 Dashboard
               </Link>
+              <Link
+                to="/profile"
+                className="block px-3 py-2 text-gray-600 dark:text-primary-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+              >
+                Profile
+              </Link>
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-3 py-2 text-gray-600 dark:text-primary-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                className="w-full text-left px-3 py-2 text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors"
               >
                 Logout
               </button>

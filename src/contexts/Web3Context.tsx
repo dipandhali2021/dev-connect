@@ -14,6 +14,8 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
   const [account, setAccount] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
+  
+
   const connectWallet = async () => {
     if (typeof window.ethereum === 'undefined') {
       alert('Please install MetaMask to use this feature');

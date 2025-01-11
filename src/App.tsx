@@ -7,6 +7,7 @@ import { Booking } from './pages/Booking';
 import { Auth } from './pages/Auth';
 import { DeveloperDashboard } from './pages/DeveloperDashboard';
 import { CustomerDashboard } from './pages/CustomerDashboard';
+import { Profile } from './pages/Profile';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { Web3Provider } from './contexts/Web3Context';
 import { AuthProvider } from './contexts/AuthContext';
@@ -14,16 +15,17 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
-    <Web3Provider>
-      <AuthProvider>
-        <ThemeProvider>
-          <Router>
+    <Router>
+      <Web3Provider>
+        <AuthProvider>
+          <ThemeProvider>
             <div className="min-h-screen bg-white dark:bg-dark-200 transition-colors duration-200">
               <Navbar />
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/developers" element={<Developers />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route 
                   path="/developer/dashboard" 
                   element={
@@ -50,10 +52,10 @@ function App() {
                 />
               </Routes>
             </div>
-          </Router>
-        </ThemeProvider>
-      </AuthProvider>
-    </Web3Provider>
+          </ThemeProvider>
+        </AuthProvider>
+      </Web3Provider>
+    </Router>
   );
 }
 

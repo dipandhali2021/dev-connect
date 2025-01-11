@@ -9,6 +9,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { MeetingRoom } from '../components/MeetingRoom';
 
 interface BookingProps {
   developer?: {
@@ -42,7 +43,9 @@ export const Booking = ({
       setStep(3);
     }, 2000);
   };
-
+  const handleMeetingEnd = () => {
+    console.log('The meeting has ended.');
+  };
   const timeSlots = [
     '09:00 AM',
     '10:00 AM',
@@ -293,17 +296,12 @@ export const Booking = ({
                 </div>
 
                 <div className="bg-primary-600/10 p-4 rounded-xl">
-                  <p className="text-sm text-primary-600 dark:text-primary-400">
-                    <span className="font-medium">Meeting Link:</span>{' '}
-                    <a
-                      href="https://meet.devconnect.com/sarah-chen-123"
-                      className="underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      https://meet.devconnect.com/sarah-chen-123
-                    </a>
-                  </p>
+                    <MeetingRoom
+                      bookingId="67829430e53da6b71e3733a3"
+                      duration={60} // Duration in minutes
+                      startTime={new Date('2025-01-11T10:30:00')} // Specific start time
+                      onMeetingEnd={handleMeetingEnd}
+                    />
                 </div>
 
                 <button
