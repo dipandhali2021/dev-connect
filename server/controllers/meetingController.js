@@ -7,30 +7,26 @@ class MeetingController {
   createMeeting = asyncHandler(async (req, res) => {
     const { bookingId, startTime, duration, createdBy, meetingUrl, participants } = req.body;
     
-    // Check if meeting already exists for this booking
-    let meeting = await Meeting.findOne({ bookingId });
-    
-    if (meeting) {
-      return res.status(200).json({
-        success: true,
-        data: meeting
-      });
-    }
-
-    // Create new meeting with provided data
-    meeting = await Meeting.create({
-      bookingId,
-      startTime,
-      duration,
-      createdBy,
-      meetingUrl,
-      participants,
-      status: 'scheduled'
-    });
-
+    const meeting = await Meeting.findOneAndUpdate(
+      { bookingId },
+      {
+        $setOnInsert: {
+          startTime,
+          duration,
+          createdBy,
+          meetingUrl,
+          participants,
+          status: 'scheduled'
+        }
+      },
+      {
+        upsert: true,
+        new: true
+      }
+    );
   
-
-    res.status(201).json({
+    const statusCode = meeting.isNew ? 201 : 200;
+    res.status(statusCode).json({
       success: true,
       data: meeting
     });
@@ -78,7 +74,6 @@ class MeetingController {
     });
   });
 
-  //http://localhost:5000/api/meetings/booking/${bookingId}
   getMeetingByBookingId = asyncHandler(async (req, res) => {
     const { bookingId } = req.params;
 
