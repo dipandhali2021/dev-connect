@@ -10,6 +10,7 @@ import {
   User,
   AlertCircle,
   Loader2,
+  Zap,
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MeetingRoom } from '../components/MeetingRoom';
@@ -46,9 +47,9 @@ export const Booking = () => {
   const [isProcessingBooking, setIsProcessingBooking] = useState(false);
   const [bookingData, setBookingData] = useState<any>(null);
   const [showPayment, setShowPayment] = useState(false);
+  const [isInstantBooking, setIsInstantBooking] = useState(false);
   const { user } = useAuth();
 
-   // Calculate totalCost here, with a safe default if developer is null
   const totalCost = developer ? developer.hourlyRate * duration : 0;
 
   useEffect(() => {
@@ -75,7 +76,6 @@ export const Booking = () => {
     }
   }, [developerId]);
 
-
   useEffect(() => {
     const updateEthAmount = async () => {
       if (totalCost > 0) {
@@ -93,6 +93,83 @@ export const Booking = () => {
 
     updateEthAmount();
   }, [totalCost]);
+
+  const handleInstantBooking = () => {
+    setIsInstantBooking(true);
+    const now = new Date();
+    const bookingTime = new Date(now.getTime() + 5 * 60000); // Current time + 5 minutes
+    setSelectedDate(bookingTime);
+    setSelectedTime(
+      bookingTime.toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      })
+    );
+  };
+
+  const getDayName = (date: Date): keyof Developer['availability'] => {
+    const days: Record<number, keyof Developer['availability']> = {
+      1: 'monday',
+      2: 'tuesday',
+      3: 'wednesday',
+      4: 'thursday',
+      5: 'friday',
+    };
+    return days[date.getDay()] || 'monday';
+  };
+
+  const getAvailableTimesForDate = (date: Date): string[] => {
+    const dayName = getDayName(date);
+    return developer?.availability[dayName] || [];
+  };
+
+  const handlePaymentSuccess = async (txHash: string) => {
+    if (isProcessingBooking) return;
+    
+    try {
+      setIsProcessingBooking(true);
+      setShowPayment(false);
+
+      const response = await fetch('http://localhost:5000/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          developerId: developer?._id,
+          customerId: user?._id,
+          date: selectedDate,
+          time: selectedTime,
+          duration,
+          totalAmount: totalCost,
+          txHash,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create booking');
+      }
+
+      const data = await response.json();
+      setBookingData(data.data);
+      setStep(2);
+    } catch (error) {
+      console.error('Failed to create booking:', error);
+    } finally {
+      setIsProcessingBooking(false);
+    }
+  };
+
+  const handleConfirmBooking = () => {
+    if (!selectedTime || !user || isProcessingBooking) {
+      return;
+    }
+    setShowPayment(true);
+  };
+
+  const availableTimeSlots = getAvailableTimesForDate(selectedDate);
 
   if (isLoading) {
     return (
@@ -117,82 +194,6 @@ export const Booking = () => {
       </div>
     );
   }
-
-
-
-  const getDayName = (date: Date): keyof Developer['availability'] => {
-    const days: Record<number, keyof Developer['availability']> = {
-      1: 'monday',
-      2: 'tuesday',
-      3: 'wednesday',
-      4: 'thursday',
-      5: 'friday',
-    };
-    return days[date.getDay()] || 'monday';
-  };
-
-  const getAvailableTimesForDate = (date: Date): string[] => {
-    const dayName = getDayName(date);
-    return developer.availability[dayName] || [];
-  };
-
-
-  
-
- 
-
-
-  const handlePaymentSuccess = async (txHash: string) => {
-    if (isProcessingBooking) return;
-    
-    try {
-      setIsProcessingBooking(true);
-      setShowPayment(false);
-
-      const response = await fetch('http://localhost:5000/api/bookings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          developerId: developer._id,
-          customerId: user?._id,
-          date: selectedDate,
-          time: selectedTime,
-          duration,
-          totalAmount: totalCost,
-          txHash,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create booking');
-      }
-
-      const data = await response.json();
-      setBookingData(data.data);
-      
-      // Only transition to step 2 after successful booking creation
-      setStep(2);
-    } catch (error) {
-      console.error('Failed to create booking:', error);
-      // Show error message to user
-    } finally {
-      setIsProcessingBooking(false);
-    }
-  };
-  const handleConfirmBooking = () => {
-    if (!selectedTime || !user || isProcessingBooking) {
-      return;
-    }
-    setShowPayment(true);
-  };
-
-
-
-
-  const availableTimeSlots = getAvailableTimesForDate(selectedDate);
 
   return (
     <div className="min-h-screen pt-16 bg-gray-50 dark:bg-dark-200">
@@ -230,71 +231,91 @@ export const Booking = () => {
                 </div>
 
                 <div className="space-y-8">
-                  {/* Date Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-primary-100 mb-2">
-                      Select Date
-                    </label>
-                    <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-                      {[...Array(6)].map((_, i) => {
-                        const date = new Date();
-                        date.setDate(date.getDate() + i);
-                        const dayName = getDayName(date);
-                        const hasAvailability =
-                          developer.availability[dayName]?.length > 0;
-
-                        return (
-                          <button
-                            key={i}
-                            onClick={() => {
-                              setSelectedDate(date);
-                              setSelectedTime(null);
-                            }}
-                            disabled={!hasAvailability}
-                            className={`p-3 rounded-xl text-center transition-colors ${
-                              selectedDate.toDateString() ===
-                              date.toDateString()
-                                ? 'bg-primary-600 text-white'
-                                : hasAvailability
-                                ? 'bg-gray-50 dark:bg-dark-200 text-gray-900 dark:text-white hover:bg-primary-600/10'
-                                : 'bg-gray-100 dark:bg-dark-300 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                            }`}
-                          >
-                            <div className="text-sm font-medium">
-                              {date.toLocaleDateString('en-US', {
-                                weekday: 'short',
-                              })}
-                            </div>
-                            <div className="text-lg font-semibold">
-                              {date.getDate()}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
+                  {/* Instant Booking Button */}
+                  <div className="flex justify-center">
+                    <button
+                      onClick={handleInstantBooking}
+                      className={`px-6 py-3 rounded-xl flex items-center gap-2 transition-colors ${
+                        isInstantBooking
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-primary-600/10 text-primary-600 dark:text-primary-400'
+                      }`}
+                    >
+                      <Zap className="w-5 h-5" />
+                      <span>Instant Booking (Start in 5 minutes)</span>
+                    </button>
                   </div>
 
-                  {/* Time Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-primary-100 mb-2">
-                      Available Time Slots
-                    </label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {availableTimeSlots.map((time) => (
-                        <button
-                          key={time}
-                          onClick={() => setSelectedTime(time)}
-                          className={`p-3 rounded-xl text-center transition-colors ${
-                            selectedTime === time
-                              ? 'bg-primary-600 text-white'
-                              : 'bg-gray-50 dark:bg-dark-200 text-gray-900 dark:text-white hover:bg-primary-600/10'
-                          }`}
-                        >
-                          {time}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Date and Time Selection (hidden when instant booking is selected) */}
+                  {!isInstantBooking && (
+                    <>
+                      {/* Date Selection */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-primary-100 mb-2">
+                          Select Date
+                        </label>
+                        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                          {[...Array(6)].map((_, i) => {
+                            const date = new Date();
+                            date.setDate(date.getDate() + i);
+                            const dayName = getDayName(date);
+                            const hasAvailability =
+                              developer.availability[dayName]?.length > 0;
+
+                            return (
+                              <button
+                                key={i}
+                                onClick={() => {
+                                  setSelectedDate(date);
+                                  setSelectedTime(null);
+                                }}
+                                disabled={!hasAvailability}
+                                className={`p-3 rounded-xl text-center transition-colors ${
+                                  selectedDate.toDateString() ===
+                                  date.toDateString()
+                                    ? 'bg-primary-600 text-white'
+                                    : hasAvailability
+                                    ? 'bg-gray-50 dark:bg-dark-200 text-gray-900 dark:text-white hover:bg-primary-600/10'
+                                    : 'bg-gray-100 dark:bg-dark-300 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                                }`}
+                              >
+                                <div className="text-sm font-medium">
+                                  {date.toLocaleDateString('en-US', {
+                                    weekday: 'short',
+                                  })}
+                                </div>
+                                <div className="text-lg font-semibold">
+                                  {date.getDate()}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Time Selection */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-primary-100 mb-2">
+                          Available Time Slots
+                        </label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {availableTimeSlots.map((time) => (
+                            <button
+                              key={time}
+                              onClick={() => setSelectedTime(time)}
+                              className={`p-3 rounded-xl text-center transition-colors ${
+                                selectedTime === time
+                                  ? 'bg-primary-600 text-white'
+                                  : 'bg-gray-50 dark:bg-dark-200 text-gray-900 dark:text-white hover:bg-primary-600/10'
+                              }`}
+                            >
+                              {time}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   {/* Duration Selection */}
                   <div>
@@ -375,7 +396,7 @@ export const Booking = () => {
 
                   <button
                     onClick={handleConfirmBooking}
-                    disabled={!selectedTime}
+                    disabled={!selectedTime && !isInstantBooking}
                     className="w-full bg-primary-600 text-white py-4 rounded-xl hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span>Confirm Booking</span>
@@ -385,6 +406,7 @@ export const Booking = () => {
               </div>
             </motion.div>
           )}
+
           <PaymentModal
             isOpen={showPayment}
             onClose={() => setShowPayment(false)}
@@ -393,9 +415,6 @@ export const Booking = () => {
             developerAddress={developer.address}
             developerName={developer.name}
           />
-          {/* Rest of the code remains the same */}
-          {/* Processing and Confirmation steps */}
-          
 
           {step === 2 && (
             <motion.div

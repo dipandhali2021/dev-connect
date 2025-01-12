@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Users, Video, Mic, MicOff, VideoOff, PhoneOff, Shield, AlertCircle } from 'lucide-react';
+import {
+  Clock,
+  Users,
+  Video,
+  Mic,
+  MicOff,
+  VideoOff,
+  PhoneOff,
+  Shield,
+  AlertCircle,
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { webRTCService } from '../services/webRTCService';
-import { VideoCall } from './VideoCall';
 
 interface MeetingRoomProps {
   bookingId: string;
@@ -18,7 +26,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
   duration,
   startTime,
   startDate,
-  developerId
+  developerId,
 }) => {
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [isMuted, setIsMuted] = useState(false);
@@ -32,19 +40,19 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     const timeStr = String(time);
     const [rawTime, period] = timeStr.split(' ');
     const [hours, minutes] = rawTime.split(':');
-    
+
     let hour24 = parseInt(hours);
     if (period === 'PM' && hour24 !== 12) hour24 += 12;
     if (period === 'AM' && hour24 === 12) hour24 = 0;
-    
+
     const dateObj = new Date(date);
     dateObj.setHours(hour24);
     dateObj.setMinutes(parseInt(minutes));
     dateObj.setSeconds(0);
     dateObj.setMilliseconds(0);
-    
+
     return dateObj.toISOString();
-  }
+  };
 
   useEffect(() => {
     const initializeMeeting = async () => {
@@ -52,9 +60,10 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
         setIsLoading(true);
 
         // First check if meeting exists
-        const checkResponse = await fetch(`http://localhost:5000/api/meetings/booking/${bookingId}`, {
-          
-        });
+        const checkResponse = await fetch(
+          `http://localhost:5000/api/meetings/booking/${bookingId}`,
+          {}
+        );
         const checkData = await checkResponse.json();
         if (checkData.data) {
           // Meeting exists, use it
@@ -62,7 +71,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
         } else {
           // Create new meeting if none exists
           const formattedDateTime = formatDateTime(startDate, startTime);
-          
+
           const response = await fetch('http://localhost:5000/api/meetings', {
             method: 'POST',
             headers: {
@@ -73,18 +82,18 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
               startTime: formattedDateTime,
               duration,
               createdBy: user?._id,
-              meetingUrl: `https://meet.devconnect.com/${bookingId}`,
+              meetingUrl: `http://localhost:3000/room/${bookingId}`,
               participants: [
                 {
                   userId: user?._id,
-                  role: user?.role
+                  role: user?.role,
                 },
                 {
                   userId: developerId,
-                  role: 'developer'
-                }
-              ]
-            })
+                  role: 'developer',
+                },
+              ],
+            }),
           });
 
           if (!response.ok) {
@@ -94,9 +103,6 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
           const data = await response.json();
           setMeeting(data.data);
         }
-
-        // Initialize WebRTC
-        await webRTCService.initialize(bookingId, user?._id || '');
 
       } catch (err: any) {
         setError(err.message || 'Failed to initialize meeting room');
@@ -109,9 +115,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
       initializeMeeting();
     }
 
-    return () => {
-      webRTCService.disconnect();
-    };
+    
   }, [bookingId, startTime, duration, user, startDate, developerId]);
 
   if (isLoading) {
@@ -127,10 +131,6 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
   }
 
   return (
-    <VideoCall
-      roomId={bookingId}
-      userId={user?._id || ''}
-      userName={user?.name || ''}
-    />
+  <h1 className='text-white font-bold'>Meeting url created: {meeting.meetingUrl}</h1>
   );
 };

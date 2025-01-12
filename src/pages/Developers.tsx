@@ -69,33 +69,7 @@ export const Developers = () => {
   return (
     <div className="pt-16 min-h-screen bg-gray-50 dark:bg-dark-200">
       {/* Search Section */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-dark-100 border-b border-gray-200 dark:border-primary-600/20 transition-colors duration-200"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="relative flex-1 max-w-2xl">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-primary-100/50 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search by skills, name, or expertise..."
-                className="w-full bg-gray-50 dark:bg-dark-200 border border-gray-300 dark:border-primary-600/30 text-gray-900 dark:text-white pl-12 pr-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors duration-200"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-4 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors"
-            >
-              <Filter className="w-5 h-5" />
-              <span>Filters</span>
-            </button>
-          </div>
-        </div>
-      </motion.div>
+      
 
       {/* Developers Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -139,12 +113,7 @@ export const Developers = () => {
 
                 <div className="mt-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                      <span className="text-gray-900 dark:text-white font-medium">
-                        {dev.rating || 0} 
-                      </span>
-                    </div>
+                    
                     <div className="flex items-center gap-1">
                       <Clock className="w-5 h-5 text-gray-600 dark:text-primary-100" />
                       <span className="text-gray-900 dark:text-white font-medium">

@@ -13,6 +13,7 @@ import {
   Linkedin,
   Globe,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface Developer {
   _id: string;
@@ -240,12 +241,13 @@ export const DeveloperProfile = ({
                   </div>
                 </div> */}
 
+                    
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <button className="flex-1 bg-primary-600 text-white px-6 py-3 rounded-xl hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
+                  <Link to={`/book/${developer._id}`} className="flex-1 bg-primary-600 text-white px-6 py-3 rounded-xl hover:bg-primary-700 transition-colors flex items-center justify-center gap-2">
                     <Calendar className="w-5 h-5" />
                     <span>Book a Session</span>
-                  </button>
+                  </Link>
                   <button className="flex-1 border-2 border-primary-600 text-primary-600 dark:text-primary-400 px-6 py-3 rounded-xl hover:bg-primary-600/10 transition-colors flex items-center justify-center gap-2">
                     <MessageSquare className="w-5 h-5" />
                     <span>Send Message</span>

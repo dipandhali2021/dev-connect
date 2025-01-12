@@ -13,7 +13,6 @@ import meetingRoutes from './routes/meetingRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
-import MeetingServer from './websocket/meetingServer.js';
 
 dotenv.config();
 
@@ -78,7 +77,5 @@ const server =  app.listen(PORT, () => {
 });
 
 
-// Initialize WebSocket server
-const wsServer = new MeetingServer(server);
-app.set('wsServer', wsServer); // Add this line
+
 

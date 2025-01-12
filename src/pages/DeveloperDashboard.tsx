@@ -19,14 +19,23 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { MeetingModal } from '../components/MeetingModal';
+import { ethers } from 'ethers';
+import { useWeb3 } from '../contexts/Web3Context';
 
 export const DeveloperDashboard = () => {
   const [activeNotifications, setActiveNotifications] = useState(3);
   const [selectedTimeframe, setSelectedTimeframe] = useState('week');
   const [upcomingSessions, setUpcomingSessions] = useState([]);
+  const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
 
   const { getProfile } = useAuth();
-
+  const [walletBalance, setWalletBalance] = useState({
+    eth: '0',
+    usd: '0',
+    pending: '0',
+  });
+  const { account } = useWeb3();
   useEffect(() => {
     const fetchUpcomingSessions = async () => {
       try {
@@ -48,7 +57,40 @@ export const DeveloperDashboard = () => {
     fetchUpcomingSessions();
   }, []);
 
-  console.log(upcomingSessions);  
+  useEffect(() => {
+    const fetchWalletBalance = async () => {
+      if (window.ethereum && account) {
+        try {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const balance = await provider.getBalance(account);
+          const ethBalance = ethers.formatEther(balance);
+
+          // Fetch ETH price in USD
+          const response = await fetch(
+            'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'
+          );
+          const data = await response.json();
+          const ethPrice = data.ethereum.usd;
+
+          const usdBalance = (parseFloat(ethBalance) * ethPrice).toFixed(2);
+
+          setWalletBalance({
+            eth: ethBalance,
+            usd: usdBalance,
+            pending: '0', // You can implement pending transactions logic if needed
+          });
+        } catch (error) {
+          console.error('Error fetching wallet balance:', error);
+        }
+      }
+    };
+
+    fetchWalletBalance();
+    // Set up an interval to refresh balance
+    const interval = setInterval(fetchWalletBalance, 30000); // Every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [account]);
 
   const recentReviews = [
     {
@@ -105,100 +147,13 @@ export const DeveloperDashboard = () => {
     <div className="min-h-screen pt-16 bg-gray-50 dark:bg-dark-200">
       <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Top Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {[
-            {
-              icon: Video,
-              label: 'Upcoming Sessions',
-              value: '3',
-              trend: '+2 this week',
-              color: 'blue',
-            },
-            {
-              icon: Clock,
-              label: 'Hours Completed',
-              value: '24',
-              trend: '85% completion rate',
-              color: 'green',
-            },
-            {
-              icon: DollarSign,
-              label: 'Total Earnings',
-              value: '$2,880',
-              trend: earnings.trend,
-              color: 'purple',
-            },
-            {
-              icon: Star,
-              label: 'Average Rating',
-              value: '4.9',
-              trend: 'Top 5% of developers',
-              color: 'yellow',
-            },
-          ].map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-white dark:bg-dark-100 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-primary-600/20 hover:border-primary-600/50 dark:hover:border-primary-600/50 transition-all duration-300"
-            >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`bg-${stat.color}-500/10 p-3 rounded-lg`}>
-                    <stat.icon className={`w-6 h-6 text-${stat.color}-500`} />
-                  </div>
-                  <span className="text-xs font-medium text-gray-500 dark:text-primary-100/70">
-                    {stat.trend}
-                  </span>
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                  {stat.value}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-primary-100">
-                  {stat.label}
-                </p>
-              </div>
-              <div className={`h-1 bg-${stat.color}-500 w-full`} />
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-8">
+        
+    
+        <div className="grid lg:grid-cols-1 gap-8">
           {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-8">
             {/* Earnings Chart */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-dark-100 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-primary-600/20"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Earnings Overview
-                </h2>
-                <div className="flex gap-2">
-                  {['week', 'month', 'year'].map((timeframe) => (
-                    <button
-                      key={timeframe}
-                      onClick={() => setSelectedTimeframe(timeframe)}
-                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                        selectedTimeframe === timeframe
-                          ? 'bg-primary-600 text-white'
-                          : 'bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-primary-100 hover:bg-primary-600/10'
-                      }`}
-                    >
-                      {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="h-64 bg-gray-50 dark:bg-dark-200 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500 dark:text-primary-100">
-                  Earnings chart will be displayed here
-                </p>
-              </div>
-            </motion.div>
+           
 
             {/* Upcoming Sessions */}
             <motion.div
@@ -275,19 +230,17 @@ export const DeveloperDashboard = () => {
                           ${session.bookingId.totalAmount}
                         </span>
                         <div className="flex gap-2">
-                          <button className="px-4 py-2 bg-gray-100 dark:bg-dark-100 text-gray-700 dark:text-primary-100 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-200 transition-colors">
-                            View Details
-                          </button>
+                          
                           {new Date(session.startTime).getTime() -
                             new Date().getTime() <=
                             300000 && (
-                            <a
-                              href={`/meeting/${session._id}`}
+                            <button
+                              onClick={() => setSelectedMeeting(session)}
                               className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors flex items-center gap-1"
                             >
                               Join Meeting
                               <ArrowUpRight className="w-4 h-4" />
-                            </a>
+                            </button>
                           )}
                         </div>
                       </div>
@@ -298,10 +251,24 @@ export const DeveloperDashboard = () => {
             </motion.div>
           </div>
 
+          {selectedMeeting && (
+            <MeetingModal
+              isOpen={!!selectedMeeting}
+              onClose={() => setSelectedMeeting(null)}
+              meetingData={{
+                bookingId: selectedMeeting.bookingId._id,
+                developerId: selectedMeeting.bookingId.developer._id,
+                duration: selectedMeeting.duration,
+                startTime: selectedMeeting.startTime,
+                startDate: new Date(selectedMeeting.startTime),
+              }}
+            />
+          )}
+
           {/* Right Sidebar */}
-          <div className="space-y-8">
+          {/* <div className="space-y-8"> */}
             {/* Wallet Card */}
-            <motion.div
+            {/* <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-gradient-to-br from-primary-600 to-primary-800 rounded-xl shadow-lg p-6 text-white"
@@ -311,132 +278,39 @@ export const DeveloperDashboard = () => {
                   <Wallet className="w-6 h-6" />
                   <h3 className="text-lg font-semibold">Wallet Balance</h3>
                 </div>
-                <button className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                <button
+                  onClick={() =>
+                    window.open(
+                      `https://etherscan.io/address/${account}`,
+                      '_blank'
+                    )
+                  }
+                  className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                >
                   <ArrowUpRight className="w-5 h-5" />
                 </button>
               </div>
-              <p className="text-3xl font-bold mb-2">${earnings.total}</p>
+              <p className="text-3xl font-bold mb-2">${walletBalance.usd}</p>
               <div className="flex items-center gap-2 text-primary-100">
-                <span className="text-sm">Pending: ${earnings.pending}</span>
+                <span className="text-sm">
+                  ETH: {parseFloat(walletBalance.eth).toFixed(4)}
+                </span>
                 <span className="text-sm">•</span>
                 <span className="text-sm">
-                  Available: ${earnings.total - earnings.pending}
+                  Pending: ${walletBalance.pending}
                 </span>
               </div>
-              <button className="w-full mt-4 py-2 bg-white text-primary-600 rounded-lg font-medium hover:bg-white/90 transition-colors">
-                Withdraw Funds
+              <button
+                onClick={() =>
+                  window.open('https://app.uniswap.org/#/swap', '_blank')
+                }
+                className="w-full mt-4 py-2 bg-white text-primary-600 rounded-lg font-medium hover:bg-white/90 transition-colors"
+              >
+                Swap Tokens
               </button>
-            </motion.div>
+            </motion.div> */}
 
-            {/* Recent Reviews */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-dark-100 rounded-xl shadow-sm border border-gray-200 dark:border-primary-600/20"
-            >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    Recent Reviews
-                  </h2>
-                  <div className="flex items-center gap-1 text-yellow-400">
-                    <Star className="w-5 h-5 fill-current" />
-                    <span className="font-medium">4.9</span>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  {recentReviews.map((review) => (
-                    <div
-                      key={review.id}
-                      className="bg-gray-50 dark:bg-dark-200 rounded-xl p-4"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-primary-600/10 rounded-full flex items-center justify-center">
-                            <Users className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                          </div>
-                          <span className="font-medium text-gray-900 dark:text-white">
-                            {review.customer}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="font-medium text-gray-900 dark:text-white">
-                            {review.rating}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-gray-600 dark:text-primary-100 text-sm mb-2">
-                        {review.comment}
-                      </p>
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {review.skills.map((skill) => (
-                          <span
-                            key={skill}
-                            className="px-2 py-1 bg-primary-600/10 text-primary-600 dark:text-primary-400 rounded-lg text-xs"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                      {review.reply ? (
-                        <div className="bg-white dark:bg-dark-100 rounded-lg p-3 mt-2 text-sm">
-                          <p className="text-gray-600 dark:text-primary-100">
-                            {review.reply}
-                          </p>
-                        </div>
-                      ) : (
-                        <button className="text-primary-600 dark:text-primary-400 text-sm font-medium hover:text-primary-700 transition-colors">
-                          Reply to review
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Skill Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-dark-100 rounded-xl shadow-sm border border-gray-200 dark:border-primary-600/20"
-            >
-              <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                  Skill Performance
-                </h2>
-                <div className="space-y-4">
-                  {skillStats.map((skill) => (
-                    <div key={skill.name} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                          {skill.name}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-600 dark:text-primary-100">
-                            {skill.sessions} sessions
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">
-                              {skill.rating}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="h-2 bg-gray-100 dark:bg-dark-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary-600 rounded-full"
-                          style={{ width: `${(skill.sessions / 15) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          </div>
+          {/* </div> */}
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ import { Auth } from './pages/Auth';
 import { DeveloperDashboard } from './pages/DeveloperDashboard';
 import { CustomerDashboard } from './pages/CustomerDashboard';
 import { Profile } from './pages/Profile';
+import { Meeting } from './pages/Meeting';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { Web3Provider } from './contexts/Web3Context';
 import { AuthProvider } from './contexts/AuthContext';
@@ -47,6 +48,14 @@ function App() {
                   element={
                     <ProtectedRoute role="customer">
                       <Booking />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/meeting/:meetingId" 
+                  element={
+                    <ProtectedRoute role="any">
+                      <Meeting />
                     </ProtectedRoute>
                   } 
                 />

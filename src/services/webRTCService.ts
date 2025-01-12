@@ -1,11 +1,15 @@
-import { Message, PeerConnection } from '../types/webrtc';
+import { Message, PeerConnection, ChatMessage, Participant } from '../types/webrtc';
 
 class WebRTCService {
   private peerConnections: Map<string, PeerConnection> = new Map();
   private localStream?: MediaStream;
+  private remoteStream?: MediaStream;
   private socket?: WebSocket;
   private roomId?: string;
   private userId?: string;
+  private onRemoteStreamCallback?: (stream: MediaStream) => void;
+  private onParticipantUpdateCallback?: (participants: Participant[]) => void;
+  private onChatMessageCallback?: (message: ChatMessage) => void;
 
   private readonly configuration = {
     iceServers: [
@@ -28,11 +32,27 @@ class WebRTCService {
         video: true,
         audio: true,
       });
-      return this.localStream;
+
+      return {
+        localStream: this.localStream,
+        remoteStream: this.remoteStream
+      };
     } catch (error) {
       console.error('Error accessing media devices:', error);
       throw error;
     }
+  }
+
+  onRemoteStream(callback: (stream: MediaStream) => void) {
+    this.onRemoteStreamCallback = callback;
+  }
+
+  onParticipantUpdate(callback: (participants: Participant[]) => void) {
+    this.onParticipantUpdateCallback = callback;
+  }
+
+  onChatMessage(callback: (message: ChatMessage) => void) {
+    this.onChatMessageCallback = callback;
   }
 
   private setupSocketListeners() {
@@ -51,8 +71,28 @@ class WebRTCService {
         case 'candidate':
           await this.handleCandidate(message);
           break;
+        case 'chat':
+          this.handleChatMessage(message);
+          break;
       }
     };
+
+    this.socket.onopen = () => {
+      console.log('Connected to signaling server');
+      this.sendMessage({
+        type: 'join',
+        sender: this.userId!,
+        target: 'all',
+        data: { name: 'User' }, // Add user name or other details here
+        timestamp: Date.now(),
+      });
+    };
+  }
+
+  private handleChatMessage(message: Message) {
+    if (this.onChatMessageCallback) {
+      this.onChatMessageCallback(message.data as ChatMessage);
+    }
   }
 
   private async handleOffer(message: Message) {
@@ -129,9 +169,10 @@ class WebRTCService {
     // Handle remote stream
     connection.ontrack = (event) => {
       const [stream] = event.streams;
-      const peerConnection = this.peerConnections.get(targetUserId);
-      if (peerConnection) {
-        peerConnection.stream = stream;
+      this.remoteStream = stream;
+      
+      if (this.onRemoteStreamCallback) {
+        this.onRemoteStreamCallback(stream);
       }
     };
 
@@ -144,24 +185,19 @@ class WebRTCService {
     return peerConnection;
   }
 
-  async startCall(targetUserId: string) {
-    const peerConnection = this.createPeerConnection(targetUserId);
-    console.log('Starting call with:', peerConnection);
-    
-    try {
-      const offer = await peerConnection.connection.createOffer();
-      await peerConnection.connection.setLocalDescription(offer);
+  sendChatMessage(message: ChatMessage) {
+    this.sendMessage({
+      type: 'chat',
+      sender: this.userId!,
+      target: 'all',
+      data: message,
+      timestamp: Date.now(),
+    });
+  }
 
-      this.sendMessage({
-        type: 'offer',
-        sender: this.userId!,
-        target: targetUserId,
-        data: offer,
-        timestamp: Date.now(),
-      });
-    } catch (error) {
-      console.error('Error starting call:', error);
-      throw error;
+  private sendMessage(message: Message) {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(message));
     }
   }
 
@@ -187,7 +223,6 @@ class WebRTCService {
         video: true,
       });
 
-      // Replace video track with screen share track
       if (this.localStream) {
         const [videoTrack] = this.localStream.getVideoTracks();
         if (videoTrack) {
@@ -205,7 +240,6 @@ class WebRTCService {
             }
           });
 
-          // Listen for screen share stop
           screenTrack.onended = () => {
             this.stopScreenShare();
           };
@@ -228,7 +262,6 @@ class WebRTCService {
           this.localStream.removeTrack(oldTrack);
           this.localStream.addTrack(videoTrack);
 
-          // Update all peer connections with new track
           this.peerConnections.forEach((peer) => {
             const sender = peer.connection
               .getSenders()
@@ -245,13 +278,18 @@ class WebRTCService {
     }
   }
 
-  private sendMessage(message: Message) {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(message));
-    }
-  }
-
   disconnect() {
+    // Send leave message
+    if (this.socket && this.userId) {
+      this.sendMessage({
+        type: 'leave',
+        sender: this.userId,
+        target: 'all',
+        data: null,
+        timestamp: Date.now(),
+      });
+    }
+
     // Close all peer connections
     this.peerConnections.forEach((peer) => {
       peer.connection.close();

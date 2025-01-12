@@ -7,16 +7,18 @@ class MeetingController {
   createMeeting = asyncHandler(async (req, res) => {
     const { bookingId, startTime, duration, createdBy, meetingUrl, participants } = req.body;
     
-
-    const existingMeeting = await Meeting.findOne({ bookingId });
-    if (existingMeeting) {
+    // Check if meeting already exists for this booking
+    let meeting = await Meeting.findOne({ bookingId });
+    
+    if (meeting) {
       return res.status(200).json({
         success: true,
-        data: existingMeeting
+        data: meeting
       });
     }
 
-    const meeting = await Meeting.create({
+    // Create new meeting with provided data
+    meeting = await Meeting.create({
       bookingId,
       startTime,
       duration,
@@ -25,16 +27,9 @@ class MeetingController {
       participants,
       status: 'scheduled'
     });
+
   
-    // Set up WebSocket connection for the meeting
-    const wsServer = req.app.get('wsServer');
-    if (wsServer) {
-      wsServer.handleNewMeeting(meeting._id);
-    } else {
-      console.error('WebSocket server not found');
-    }
-    wsServer.handleNewMeeting(meeting._id);
-  
+
     res.status(201).json({
       success: true,
       data: meeting
@@ -108,14 +103,29 @@ class MeetingController {
 
   getUpcomingMeetings = asyncHandler(async (req, res) => {
     const userId = req.params.userId;
-    const meetings = await MeetingService.getUpcomingMeetings(userId);
     
-
+    // Get all meetings
+    let meetings = await MeetingService.getUpcomingMeetings(userId);
     
-     
+    // Filter and delete expired meetings
+    const currentTime = new Date();
+    const validMeetings = [];
+    
+    for (const meeting of meetings) {
+      const meetingStartTime = new Date(meeting.startTime);
+      const meetingEndTime = new Date(meetingStartTime.getTime() + meeting.duration * 60 * 1000); // Convert duration to milliseconds
+      
+      if (currentTime > meetingEndTime) {
+        // Meeting has expired, delete it
+        await Meeting.findByIdAndDelete(meeting._id);
+      } else {
+        validMeetings.push(meeting);
+      }
+    }
+    
     res.json({
       success: true,
-      data: meetings,
+      data: validMeetings,
     });
   });
 }

@@ -2,8 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Code2, Shield, Video, Clock } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Home = () => {
+  const { isAuthenticated } = useAuth();
   return (
     <div className="pt-16">
       {/* Hero Section */}
@@ -49,12 +51,21 @@ export const Home = () => {
               >
                 Find a Developer
               </Link>
-              <Link
-                to="/auth"
-                className="bg-transparent text-gray-600 dark:text-primary-100 border-2 border-primary-600 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-primary-600/10 transition-colors"
-              >
-                Login Now
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  to="/profile"
+                  className="bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Profile
+                </Link>
+              ) : (
+                <Link
+                  to="/auth"
+                  className="bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Connect Wallet
+                </Link>
+              )}
             </motion.div>
           </div>
         </motion.div>
