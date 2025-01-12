@@ -37,7 +37,15 @@ class AuthController {
         name: user.name,
         address: user.address,
         role: user.role,
-        age: user.age,
+        email: user.email,
+        phone: user.phone,
+        bio: user.bio,
+        skills: user.skills,
+        hourlyRate: user.hourlyRate,
+        githubUrl: user.githubUrl,
+        linkedinUrl: user.linkedinUrl,
+        websiteUrl: user.websiteUrl,
+        availability: user.availability
       } : null
     });
   });
@@ -46,7 +54,22 @@ class AuthController {
   // @route   POST /api/auth/wallet
   // @access  Public
   walletAuth = asyncHandler(async (req, res) => {
-    const { address, signature, name, age, role } = req.body;
+    const { 
+      address, 
+      signature, 
+      role,
+      name,
+      email,
+      phone,
+      bio,
+      skills,
+      hourlyRate,
+      githubUrl,
+      linkedinUrl,
+      websiteUrl,
+      availability,
+      age,
+    } = req.body;
 
     if (!address || !signature) {
       throw new ApiError(400, 'Please provide wallet address and signature');
@@ -77,21 +100,41 @@ class AuthController {
           name: user.name,
           address: user.address,
           role: user.role,
-          age: user.age,
+          email: user.email,
+          phone: user.phone,
+          bio: user.bio,
+          skills: user.skills,
+          hourlyRate: user.hourlyRate,
+          githubUrl: user.githubUrl,
+          linkedinUrl: user.linkedinUrl,
+          websiteUrl: user.websiteUrl,
+          availability: user.availability,
+          age:user.age
         },
       });
     }
 
     // If user doesn't exist and we have registration data
-    if (name && age && role) {
+    if (role && name && email) {
       // Create new user
-      user = await User.create({
+      const userData = {
         name,
         address: address.toLowerCase(),
         addressHash: address.toLowerCase(),
         role,
-        age,
-      });
+        email,
+        phone,
+        bio,
+        skills: skills || [],
+        hourlyRate: role === 'developer' ? hourlyRate : undefined,
+        githubUrl,
+        linkedinUrl,
+        websiteUrl,
+        availability: role === 'developer' ? availability : undefined,
+        age
+      };
+
+      user = await User.create(userData);
 
       const token = generateToken(user._id, user.role);
 
@@ -109,7 +152,16 @@ class AuthController {
           name: user.name,
           address: user.address,
           role: user.role,
-          age: user.age,
+          email: user.email,
+          phone: user.phone,
+          bio: user.bio,
+          skills: user.skills,
+          hourlyRate: user.hourlyRate,
+          githubUrl: user.githubUrl,
+          linkedinUrl: user.linkedinUrl,
+          websiteUrl: user.websiteUrl,
+          availability: user.availability,
+          age:user.age
         },
       });
     }

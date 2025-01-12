@@ -8,6 +8,7 @@ interface UserProfile {
   phone?: string;
   bio?: string;
   skills?: string[];
+  age:number;
   hourlyRate?: number;
   githubUrl?: string;
   linkedinUrl?: string;

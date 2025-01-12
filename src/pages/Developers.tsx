@@ -1,55 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Star, Clock, ChevronRight, Filter, User } from 'lucide-react';
 import { DeveloperProfile } from '../components/DeveloperProfile';
 import { Link } from 'react-router-dom';
 
 interface Developer {
-  id: number;
+  _id: string;
   name: string;
   role: string;
-  rate: number;
-  rating: number;
+  hourlyRate: number;
+  rating?: number;
   skills: string[];
-  image: string;
-  available: boolean;
+  imageUrl: string;
+  status: 'available' | 'unavailable' | 'busy';
+  bio: string;
 }
-
-const developers: Developer[] = [
-  {
-    id: 1,
-    name: 'Sarah Chen',
-    role: 'Full Stack Developer',
-    rate: 120,
-    rating: 4.9,
-    skills: ['React', 'Node.js', 'TypeScript'],
-    image:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
-    available: true,
-  },
-  {
-    id: 2,
-    name: 'Alex Rodriguez',
-    role: 'Backend Architect',
-    rate: 150,
-    rating: 4.8,
-    skills: ['Python', 'AWS', 'MongoDB'],
-    image:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
-    available: true,
-  },
-  {
-    id: 3,
-    name: 'Emily Johnson',
-    role: 'UI/UX Developer',
-    rate: 100,
-    rating: 4.7,
-    skills: ['React', 'Figma', 'TailwindCSS'],
-    image:
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
-    available: false,
-  },
-];
 
 export const Developers = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,9 +22,52 @@ export const Developers = () => {
   const [selectedDeveloper, setSelectedDeveloper] = useState<Developer | null>(
     null
   );
+  const [developers, setDevelopers] = useState<Developer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  console.log(developers)
+
+  useEffect(() => {
+    const fetchDevelopers = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/users/developers');
+        const data = await response.json();
+        if (data.success) {
+          setDevelopers(data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch developers:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDevelopers();
+  }, []);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'available':
+        return 'bg-green-500/20 text-green-600 dark:text-green-400';
+      case 'busy':
+        return 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400';
+      case 'unavailable':
+        return 'bg-red-500/20 text-red-600 dark:text-red-400';
+      default:
+        return 'bg-gray-500/20 text-gray-600 dark:text-gray-400';
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pt-16 bg-gray-50 dark:bg-dark-200 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="pt-16 min-h-screen bg-gray-50 dark:bg-dark-200 transition-colors duration-200">
+    <div className="pt-16 min-h-screen bg-gray-50 dark:bg-dark-200">
       {/* Search Section */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -94,7 +102,7 @@ export const Developers = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {developers.map((dev, index) => (
             <motion.div
-              key={dev.id}
+              key={dev._id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
@@ -115,7 +123,7 @@ export const Developers = () => {
               <div className="p-6">
                 <div className="flex items-start gap-4">
                   <img
-                    src={dev.image}
+                    src={dev.imageUrl}
                     alt={dev.name}
                     className="w-16 h-16 rounded-xl object-cover"
                   />
@@ -134,13 +142,13 @@ export const Developers = () => {
                     <div className="flex items-center gap-1">
                       <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                       <span className="text-gray-900 dark:text-white font-medium">
-                        {dev.rating}
+                        {dev.rating || 0} 
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="w-5 h-5 text-gray-600 dark:text-primary-100" />
                       <span className="text-gray-900 dark:text-white font-medium">
-                        ${dev.rate}/hr
+                        ${dev.hourlyRate}/hr
                       </span>
                     </div>
                   </div>
@@ -165,10 +173,7 @@ export const Developers = () => {
                     <User className="w-5 h-5" />
                     <span>View Profile</span>
                   </button>
-                  {/* <button className="flex items-center justify-center gap-2 bg-primary-600 text-white px-4 py-3 rounded-xl hover:bg-primary-700 transition-colors">
-                    <ChevronRight className="w-5 h-5" />
-                    <span>Book Now</span>
-                  </button> */}
+                
                   <Link
                     to={`/book/${dev.id}`}
                     className="flex items-center justify-center gap-2 bg-primary-600 text-white px-4 py-3 rounded-xl hover:bg-primary-700 transition-colors"

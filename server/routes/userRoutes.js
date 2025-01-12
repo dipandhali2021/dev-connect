@@ -4,8 +4,11 @@ import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.use(authenticate); // Protect all user routes
+// Public routes
+router.get('/developers', userController.getDevelopers);
 
+// Protected routes
+router.use(authenticate);
 router.get('/profile', userController.getProfile);
 router.put('/profile', userController.updateProfile);
 
