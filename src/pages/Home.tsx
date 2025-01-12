@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 export const Home = () => {
   const { isAuthenticated } = useAuth();
+  console.log(document.cookie)
   return (
     <div className="pt-16">
       {/* Hero Section */}

@@ -16,7 +16,7 @@ export const useMeeting = (bookingId: string) => {
   useEffect(() => {
     const fetchMeeting = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/meetings/${bookingId}`, {
+        const response = await fetch(`https://synergy-hub.onrender.com/api/meetings/${bookingId}`, {
           
         });
 
@@ -46,7 +46,7 @@ export const useMeeting = (bookingId: string) => {
 
   const joinMeeting = async () => {
     try {
-      await fetch(`http://localhost:5000/api/meetings/${bookingId}/join`, {
+      await fetch(`https://synergy-hub.onrender.com/api/meetings/${bookingId}/join`, {
         method: 'POST',
         
       });
@@ -57,7 +57,7 @@ export const useMeeting = (bookingId: string) => {
 
   const endMeeting = async () => {
     try {
-      await fetch(`http://localhost:5000/api/meetings/${bookingId}/end`, {
+      await fetch(`https://synergy-hub.onrender.com/api/meetings/${bookingId}/end`, {
         method: 'POST',
         
       });

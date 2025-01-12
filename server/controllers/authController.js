@@ -90,6 +90,7 @@ class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
+        domain: '.onrender.com', 
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       });
 
@@ -141,6 +142,7 @@ class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
+        domain: '.onrender.com', 
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       });
 

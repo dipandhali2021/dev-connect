@@ -83,7 +83,7 @@ export const MeetingModal = ({
             <div className="h-full pt-16 z-50">
               <iframe
                 title="Video"
-                src={`http://localhost:3000/room/${meetingData.bookingId}`}
+                src={`react-twilio-serverlessv2-9257-dev.twil.io/index.html/room/${meetingData.bookingId}`}
                 className="w-full h-full"
                 allow="camera; microphone"
               />
