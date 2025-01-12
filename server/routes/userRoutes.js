@@ -6,6 +6,7 @@ const router = express.Router();
 
 // Public routes
 router.get('/developers', userController.getDevelopers);
+router.get('/developers/:id', userController.getDeveloperById);
 
 // Protected routes
 router.use(authenticate);

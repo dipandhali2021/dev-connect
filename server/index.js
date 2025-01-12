@@ -12,6 +12,8 @@ import { errorHandler } from './middleware/errorHandler.js';
 import meetingRoutes from './routes/meetingRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import bookingRoutes from './routes/bookingRoutes.js';
+import MeetingServer from './websocket/meetingServer.js';
 
 dotenv.config();
 
@@ -45,6 +47,7 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/meetings', meetingRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 // Health Check
 app.get('/health', (req, res) => {
@@ -68,7 +71,13 @@ process.on('unhandledRejection', (err) => {
   process.exit(1);
 });
 
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server =  app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+
+
+// Initialize WebSocket server
+new MeetingServer(server);

@@ -16,11 +16,6 @@ const userSchema = new mongoose.Schema({
     unique: true,
     index: true
   },
-  addressHash: {
-    type: String,
-    required: true,
-    unique: true
-  },
   name: {
     type: String,
     required: [true, 'Name is required']
@@ -82,16 +77,16 @@ const userSchema = new mongoose.Schema({
 });
 
 // Hash the wallet address before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('address')) return next();
+// userSchema.pre('save', async function(next) {
+//   if (!this.isModified('address')) return next();
   
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.addressHash = await bcrypt.hash(this.address.toLowerCase(), salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
+//   try {
+//     const salt = await bcrypt.genSalt(10);
+//     this.addressHash = await bcrypt.hash(this.address.toLowerCase(), salt);
+//     next();
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
 export default mongoose.model('User', userSchema);

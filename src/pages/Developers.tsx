@@ -111,12 +111,12 @@ export const Developers = () => {
               <div className="absolute top-4 right-4 z-10">
                 <div
                   className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    dev.available
+                    dev.status
                       ? 'bg-green-500/20 text-green-600 dark:text-green-400'
                       : 'bg-red-500/20 text-red-600 dark:text-red-400'
                   }`}
                 >
-                  {dev.available ? 'Available Now' : 'Unavailable'}
+                  {dev.status}
                 </div>
               </div>
 
@@ -175,7 +175,7 @@ export const Developers = () => {
                   </button>
                 
                   <Link
-                    to={`/book/${dev.id}`}
+                    to={`/book/${dev._id}`}
                     className="flex items-center justify-center gap-2 bg-primary-600 text-white px-4 py-3 rounded-xl hover:bg-primary-700 transition-colors"
                   >
                     <ChevronRight className="w-5 h-5" />

@@ -120,7 +120,6 @@ class AuthController {
       const userData = {
         name,
         address: address.toLowerCase(),
-        addressHash: address.toLowerCase(),
         role,
         email,
         phone,
@@ -201,7 +200,6 @@ class AuthController {
         _id: user._id,
         name: user.name,
         address: user.address,
-        addressHash:user.address,
         role: user.role,
         age: user.age
       }

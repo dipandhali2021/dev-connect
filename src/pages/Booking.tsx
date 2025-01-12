@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
@@ -7,53 +7,194 @@ import {
   Video,
   Shield,
   ChevronRight,
+  User,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MeetingRoom } from '../components/MeetingRoom';
+import { useAuth } from '../contexts/AuthContext';
+import { PaymentModal } from '../components/PaymentModal';
+import { ethService } from '../services/ethService';
 
-interface BookingProps {
-  developer?: {
-    id: number;
-    name: string;
-    rate: number;
-    image: string;
+interface Developer {
+  _id: string;
+  name: string;
+  hourlyRate: number;
+  imageUrl: string;
+  availability: {
+    monday: string[];
+    tuesday: string[];
+    wednesday: string[];
+    thursday: string[];
+    friday: string[];
   };
 }
 
-export const Booking = ({
-  developer = {
-    id: 1,
-    name: 'Sarah Chen',
-    rate: 120,
-    image:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
-  },
-}: BookingProps) => {
+export const Booking = () => {
   const navigate = useNavigate();
+  const { developerId } = useParams();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [duration, setDuration] = useState(1);
   const [step, setStep] = useState(1);
+  const [developer, setDeveloper] = useState<Developer | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [ethAmount, setEthAmount] = useState<string>('0');
+  const [isLoadingEth, setIsLoadingEth] = useState(false);
+  const [isProcessingBooking, setIsProcessingBooking] = useState(false);
+  const [bookingData, setBookingData] = useState<any>(null);
+  const [showPayment, setShowPayment] = useState(false);
+  const { user } = useAuth();
 
-  const totalCost = developer.rate * duration;
+   // Calculate totalCost here, with a safe default if developer is null
+  const totalCost = developer ? developer.hourlyRate * duration : 0;
 
-  const handleConfirmBooking = () => {
-    setStep(2);
-    // In a real app, we would make an API call here
-    setTimeout(() => {
-      setStep(3);
-    }, 2000);
+  useEffect(() => {
+    const fetchDeveloper = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/users/developers/${developerId}`
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch developer details');
+        }
+        const data = await response.json();
+        setDeveloper(data.data);
+      } catch (err) {
+        setError('Failed to load developer details');
+        console.error('Error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (developerId) {
+      fetchDeveloper();
+    }
+  }, [developerId]);
+
+
+  useEffect(() => {
+    const updateEthAmount = async () => {
+      if (totalCost > 0) {
+        setIsLoadingEth(true);
+        try {
+          const eth = await ethService.convertUSDToETH(totalCost);
+          setEthAmount(eth);
+        } catch (error) {
+          console.error('Failed to convert USD to ETH:', error);
+        } finally {
+          setIsLoadingEth(false);
+        }
+      }
+    };
+
+    updateEthAmount();
+  }, [totalCost]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pt-16 bg-gray-50 dark:bg-dark-200 flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+          <span className="text-gray-600 dark:text-primary-100">
+            Loading developer details...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !developer) {
+    return (
+      <div className="min-h-screen pt-16 bg-gray-50 dark:bg-dark-200 flex items-center justify-center">
+        <div className="flex items-center gap-3 text-red-500">
+          <AlertCircle className="w-6 h-6" />
+          <span>{error || 'Developer not found'}</span>
+        </div>
+      </div>
+    );
+  }
+
+
+
+  const getDayName = (date: Date): keyof Developer['availability'] => {
+    const days: Record<number, keyof Developer['availability']> = {
+      1: 'monday',
+      2: 'tuesday',
+      3: 'wednesday',
+      4: 'thursday',
+      5: 'friday',
+    };
+    return days[date.getDay()] || 'monday';
   };
+
+  const getAvailableTimesForDate = (date: Date): string[] => {
+    const dayName = getDayName(date);
+    return developer.availability[dayName] || [];
+  };
+
+
+  
+
+ 
+
+
+  const handlePaymentSuccess = async (txHash: string) => {
+    if (isProcessingBooking) return;
+    
+    try {
+      setIsProcessingBooking(true);
+      setShowPayment(false);
+
+      const response = await fetch('http://localhost:5000/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          developerId: developer._id,
+          customerId: user?._id,
+          date: selectedDate,
+          time: selectedTime,
+          duration,
+          totalAmount: totalCost,
+          txHash,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create booking');
+      }
+
+      const data = await response.json();
+      setBookingData(data.data);
+      
+      // Only transition to step 2 after successful booking creation
+      setStep(2);
+    } catch (error) {
+      console.error('Failed to create booking:', error);
+      // Show error message to user
+    } finally {
+      setIsProcessingBooking(false);
+    }
+  };
+  const handleConfirmBooking = () => {
+    if (!selectedTime || !user || isProcessingBooking) {
+      return;
+    }
+    setShowPayment(true);
+  };
+
+
   const handleMeetingEnd = () => {
     console.log('The meeting has ended.');
   };
-  const timeSlots = [
-    '09:00 AM',
-    '10:00 AM',
-    '11:00 AM',
-    '02:00 PM',
-    '03:00 PM',
-    '04:00 PM',
-  ];
+
+  const availableTimeSlots = getAvailableTimesForDate(selectedDate);
 
   return (
     <div className="min-h-screen pt-16 bg-gray-50 dark:bg-dark-200">
@@ -69,17 +210,23 @@ export const Booking = ({
             >
               <div className="p-6 md:p-8">
                 <div className="flex items-center gap-4 mb-8">
-                  <img
-                    src={developer.image}
-                    alt={developer.name}
-                    className="w-16 h-16 rounded-xl object-cover"
-                  />
+                  {developer.imageUrl ? (
+                    <img
+                      src={developer.imageUrl}
+                      alt={developer.name}
+                      className="w-16 h-16 rounded-xl object-cover"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-primary-600/10 rounded-xl flex items-center justify-center">
+                      <User className="w-8 h-8 text-primary-600" />
+                    </div>
+                  )}
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                       Book a Session with {developer.name}
                     </h2>
                     <p className="text-gray-600 dark:text-primary-100">
-                      ${developer.rate}/hour
+                      ${developer.hourlyRate}/hour
                     </p>
                   </div>
                 </div>
@@ -94,15 +241,25 @@ export const Booking = ({
                       {[...Array(6)].map((_, i) => {
                         const date = new Date();
                         date.setDate(date.getDate() + i);
+                        const dayName = getDayName(date);
+                        const hasAvailability =
+                          developer.availability[dayName]?.length > 0;
+
                         return (
                           <button
                             key={i}
-                            onClick={() => setSelectedDate(date)}
+                            onClick={() => {
+                              setSelectedDate(date);
+                              setSelectedTime(null);
+                            }}
+                            disabled={!hasAvailability}
                             className={`p-3 rounded-xl text-center transition-colors ${
                               selectedDate.toDateString() ===
                               date.toDateString()
                                 ? 'bg-primary-600 text-white'
-                                : 'bg-gray-50 dark:bg-dark-200 text-gray-900 dark:text-white hover:bg-primary-600/10'
+                                : hasAvailability
+                                ? 'bg-gray-50 dark:bg-dark-200 text-gray-900 dark:text-white hover:bg-primary-600/10'
+                                : 'bg-gray-100 dark:bg-dark-300 text-gray-400 dark:text-gray-600 cursor-not-allowed'
                             }`}
                           >
                             <div className="text-sm font-medium">
@@ -122,13 +279,18 @@ export const Booking = ({
                   {/* Time Selection */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-primary-100 mb-2">
-                      Select Time
+                      Available Time Slots
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {timeSlots.map((time) => (
+                      {availableTimeSlots.map((time) => (
                         <button
                           key={time}
-                          className="p-3 rounded-xl text-center bg-gray-50 dark:bg-dark-200 text-gray-900 dark:text-white hover:bg-primary-600/10 transition-colors"
+                          onClick={() => setSelectedTime(time)}
+                          className={`p-3 rounded-xl text-center transition-colors ${
+                            selectedTime === time
+                              ? 'bg-primary-600 text-white'
+                              : 'bg-gray-50 dark:bg-dark-200 text-gray-900 dark:text-white hover:bg-primary-600/10'
+                          }`}
                         >
                           {time}
                         </button>
@@ -167,7 +329,7 @@ export const Booking = ({
                         Hourly Rate
                       </span>
                       <span className="text-gray-900 dark:text-white font-medium">
-                        ${developer.rate}
+                        ${developer.hourlyRate}
                       </span>
                     </div>
                     <div className="flex justify-between items-center mb-4">
@@ -188,6 +350,18 @@ export const Booking = ({
                         </span>
                       </div>
                     </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600 dark:text-primary-100">
+                        Estimated ETH
+                      </span>
+                      <span className="text-gray-900 dark:text-white">
+                        {isLoadingEth ? (
+                          <span className="animate-pulse">Loading...</span>
+                        ) : (
+                          `≈ ${parseFloat(ethAmount).toFixed(6)} ETH`
+                        )}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Disclaimer */}
@@ -203,7 +377,8 @@ export const Booking = ({
 
                   <button
                     onClick={handleConfirmBooking}
-                    className="w-full bg-primary-600 text-white py-4 rounded-xl hover:bg-primary-700 transition-colors flex items-center justify-center gap-2"
+                    disabled={!selectedTime}
+                    className="w-full bg-primary-600 text-white py-4 rounded-xl hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span>Confirm Booking</span>
                     <ChevronRight className="w-5 h-5" />
@@ -212,28 +387,19 @@ export const Booking = ({
               </div>
             </motion.div>
           )}
+          <PaymentModal
+            isOpen={showPayment}
+            onClose={() => setShowPayment(false)}
+            onSuccess={handlePaymentSuccess}
+            amount={totalCost}
+            developerAddress={developer.address}
+            developerName={developer.name}
+          />
+          {/* Rest of the code remains the same */}
+          {/* Processing and Confirmation steps */}
+          
 
           {step === 2 && (
-            <motion.div
-              key="processing"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-dark-100 p-8 rounded-2xl shadow-xl text-center"
-            >
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Processing Payment
-                </h2>
-                <p className="text-gray-600 dark:text-primary-100">
-                  Please wait while we secure your booking...
-                </p>
-              </div>
-            </motion.div>
-          )}
-
-          {step === 3 && (
             <motion.div
               key="confirmation"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -267,7 +433,8 @@ export const Booking = ({
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric',
-                        })}
+                        })}{' '}
+                        at {selectedTime}
                       </p>
                     </div>
                   </div>
@@ -296,12 +463,14 @@ export const Booking = ({
                 </div>
 
                 <div className="bg-primary-600/10 p-4 rounded-xl">
-                    <MeetingRoom
-                      bookingId="67829430e53da6b71e3733a3"
-                      duration={60} // Duration in minutes
-                      startTime={new Date('2025-01-11T10:30:00')} // Specific start time
-                      onMeetingEnd={handleMeetingEnd}
-                    />
+                  <MeetingRoom
+                    bookingId="67829430e53da6b71e3733a3"
+                    duration={duration * 60}
+                    startTime={
+                      new Date(`${selectedDate.toDateString()} ${selectedTime}`)
+                    }
+                    onMeetingEnd={handleMeetingEnd}
+                  />
                 </div>
 
                 <button

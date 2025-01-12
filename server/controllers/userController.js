@@ -72,13 +72,32 @@ class UserController {
   getDevelopers = asyncHandler(async (req, res) => {
     const developers = await User.find({ 
       role: 'developer' 
-    }).select('-addressHash');
+    });
 
     res.json({
       success: true,
       data: developers
     });
   });
+  // @desc    Get developer by ID
+  // @route   GET /api/users/developers/:id
+  // @access  Public
+  getDeveloperById = asyncHandler(async (req, res) => {
+    const developer = await User.findOne({ 
+      _id: req.params.id,
+      role: 'developer'
+    });
+
+    if (!developer) {
+      throw new ApiError(404, 'Developer not found');
+    }
+
+    res.json({
+      success: true,
+      data: developer
+    });
+  });
+
 }
 
 export default new UserController();
