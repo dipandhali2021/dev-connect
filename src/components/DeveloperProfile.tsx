@@ -1,49 +1,64 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Star, Clock, Calendar, Video, MessageSquare, Shield, ChevronRight, Github, Linkedin } from 'lucide-react';
+import {
+  X,
+  Star,
+  Clock,
+  Calendar,
+  Video,
+  MessageSquare,
+  Shield,
+  ChevronRight,
+  Github,
+  Linkedin,
+  Globe,
+} from 'lucide-react';
+
+interface Developer {
+  _id: string;
+  name: string;
+  role: string;
+  hourlyRate: number;
+  rating?: number;
+  skills: string[];
+  imageUrl: string;
+  status: 'available' | 'unavailable' | 'busy';
+  bio: string;
+  githubUrl?: string;
+  linkedinUrl?: string;
+  websiteUrl?: string;
+  availability: {
+    monday: string[];
+    tuesday: string[];
+    wednesday: string[];
+    thursday: string[];
+    friday: string[];
+  };
+}
 
 interface DeveloperProfileProps {
-  developer: {
-    id: number;
-    name: string;
-    role: string;
-    rate: number;
-    rating: number;
-    skills: string[];
-    image: string;
-    available: boolean;
-  };
+  developer: Developer;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const DeveloperProfile = ({ developer, isOpen, onClose }: DeveloperProfileProps) => {
-  const reviews = [
-    {
-      id: 1,
-      author: "Michael Scott",
-      rating: 5,
-      date: "2 days ago",
-      comment: "Exceptional developer! Helped me solve complex React performance issues.",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop"
-    },
-    {
-      id: 2,
-      author: "Lisa Chen",
-      rating: 5,
-      date: "1 week ago",
-      comment: "Great communication and technical skills. Will definitely work with again!",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop"
+export const DeveloperProfile = ({
+  developer,
+  isOpen,
+  onClose,
+}: DeveloperProfileProps) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'available':
+        return 'bg-green-500/20 text-green-600 dark:text-green-400';
+      case 'busy':
+        return 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400';
+      case 'unavailable':
+        return 'bg-red-500/20 text-red-600 dark:text-red-400';
+      default:
+        return 'bg-gray-500/20 text-gray-600 dark:text-gray-400';
     }
-  ];
-
-  const availability = [
-    { day: "Mon", slots: ["9:00 AM", "2:00 PM", "4:00 PM"] },
-    { day: "Tue", slots: ["10:00 AM", "3:00 PM"] },
-    { day: "Wed", slots: ["9:00 AM", "1:00 PM", "5:00 PM"] },
-    { day: "Thu", slots: ["11:00 AM", "4:00 PM"] },
-    { day: "Fri", slots: ["9:00 AM", "2:00 PM"] }
-  ];
+  };
 
   return (
     <AnimatePresence>
@@ -59,9 +74,9 @@ export const DeveloperProfile = ({ developer, isOpen, onClose }: DeveloperProfil
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", duration: 0.5 }}
+            transition={{ type: 'spring', duration: 0.5 }}
             className="relative min-h-screen md:flex md:items-center md:justify-center p-4"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="relative max-w-5xl w-full bg-white dark:bg-dark-100 rounded-2xl shadow-xl overflow-hidden">
               {/* Header Section */}
@@ -80,15 +95,19 @@ export const DeveloperProfile = ({ developer, isOpen, onClose }: DeveloperProfil
                   <motion.img
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    src={developer.image}
+                    src={developer.imageUrl}
                     alt={developer.name}
                     className="w-32 h-32 rounded-2xl object-cover ring-4 ring-white dark:ring-dark-100"
                   />
                   <div className="flex-1">
                     <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
                       <div>
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{developer.name}</h2>
-                        <p className="text-primary-600 dark:text-primary-400 font-medium">{developer.role}</p>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                          {developer.name}
+                        </h2>
+                        <p className="text-primary-600 dark:text-primary-400 font-medium">
+                          {developer.role}
+                        </p>
                       </div>
                       <div className="flex gap-3">
                         <button className="p-2 rounded-xl bg-primary-600/10 text-primary-600 dark:text-primary-400 hover:bg-primary-600/20 transition-colors">
@@ -99,7 +118,7 @@ export const DeveloperProfile = ({ developer, isOpen, onClose }: DeveloperProfil
                         </button>
                       </div>
                     </div>
-                    
+
                     <div className="mt-4 flex flex-wrap gap-2">
                       {developer.skills.map((skill) => (
                         <span
@@ -120,63 +139,79 @@ export const DeveloperProfile = ({ developer, isOpen, onClose }: DeveloperProfil
                       <Star className="w-5 h-5" />
                       <span className="font-medium">Rating</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{developer.rating}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {developer.rating || 0}
+                    </p>
                   </div>
                   <div className="bg-gray-50 dark:bg-dark-200 p-4 rounded-xl">
                     <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400 mb-1">
                       <Clock className="w-5 h-5" />
                       <span className="font-medium">Rate</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">${developer.rate}/hr</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      ${developer.hourlyRate}/hr
+                    </p>
                   </div>
                   <div className="bg-gray-50 dark:bg-dark-200 p-4 rounded-xl">
                     <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400 mb-1">
                       <Video className="w-5 h-5" />
                       <span className="font-medium">Sessions</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">124</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      124
+                    </p>
                   </div>
                   <div className="bg-gray-50 dark:bg-dark-200 p-4 rounded-xl">
                     <div className="flex items-center gap-2 text-primary-600 dark:text-primary-400 mb-1">
                       <MessageSquare className="w-5 h-5" />
                       <span className="font-medium">Reviews</span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">48</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      48
+                    </p>
                   </div>
                 </div>
 
                 {/* About Section */}
                 <div className="mb-8">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">About</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                    About
+                  </h3>
                   <p className="text-gray-600 dark:text-primary-100 leading-relaxed">
-                    Senior developer with 8+ years of experience in full-stack development. Specialized in building scalable web applications using modern technologies. Passionate about clean code, performance optimization, and mentoring junior developers. Regular contributor to open-source projects and speaker at tech conferences.
+                    {developer.bio}
                   </p>
                 </div>
 
                 {/* Availability Calendar */}
-                <div className="mb-8">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Availability</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    {availability.map(({ day, slots }) => (
-                      <div key={day} className="bg-gray-50 dark:bg-dark-200 p-4 rounded-xl">
-                        <p className="text-primary-600 dark:text-primary-400 font-medium mb-2">{day}</p>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                  {Object.entries(developer.availability).filter(([key]) => key !== '_id').map(
+                    ([day, slots]) => (
+                      <div
+                        key={day}
+                        className="bg-gray-50 dark:bg-dark-200 p-4 rounded-xl"
+                      >
+                        <p className="text-primary-600 dark:text-primary-400 font-medium mb-2">
+                          {day.charAt(0).toUpperCase() + day.slice(1)}
+                        </p>
                         <div className="space-y-2">
-                          {slots.map((slot) => (
-                            <button
-                              key={slot}
-                              className="w-full px-3 py-1 text-sm bg-white dark:bg-dark-100 text-gray-900 dark:text-white rounded-lg hover:bg-primary-600/10 dark:hover:bg-primary-600/20 transition-colors"
-                            >
-                              {slot}
-                            </button>
-                          ))}
+                          {Array.isArray(slots)
+                            ? slots.map((slot) => (
+                                <button
+                                  key={slot}
+                                  className="w-full px-3 py-1 text-sm bg-white dark:bg-dark-100 text-gray-900 dark:text-white rounded-lg hover:bg-primary-600/10 dark:hover:bg-primary-600/20 transition-colors"
+                                >
+                                  {slot}
+                                </button>
+                              ))
+                            : null}
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    )
+                  )}
                 </div>
 
                 {/* Reviews Section */}
-                <div className="mb-8">
+                {/* <div className="mb-8">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Recent Reviews</h3>
                   <div className="space-y-4">
                     {reviews.map((review) => (
@@ -203,7 +238,7 @@ export const DeveloperProfile = ({ developer, isOpen, onClose }: DeveloperProfil
                       </div>
                     ))}
                   </div>
-                </div>
+                </div> */}
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4">

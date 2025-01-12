@@ -35,6 +35,15 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Age is required'],
     min: [18, 'Must be at least 18 years old']
   },
+  imageUrl: {
+    type: String,
+    default: ''
+  },
+  status: {
+    type: String,
+    enum: ['available', 'unavailable', 'busy'],
+    default: 'available'
+  },
   email: {
     type: String,
     match: [/^\S+@\S+\.\S+$/, 'Please use a valid email address'],

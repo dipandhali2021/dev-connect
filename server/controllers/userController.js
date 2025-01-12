@@ -33,7 +33,9 @@ class UserController {
       githubUrl,
       linkedinUrl,
       websiteUrl,
-      availability
+      availability,
+      imageUrl,
+      status
     } = req.body;
 
     const user = await User.findById(req.user._id);
@@ -53,12 +55,28 @@ class UserController {
     if (linkedinUrl) user.linkedinUrl = linkedinUrl;
     if (websiteUrl) user.websiteUrl = websiteUrl;
     if (availability && user.role === 'developer') user.availability = availability;
+    if (imageUrl) user.imageUrl = imageUrl;
+    if (status) user.status = status;
 
     const updatedUser = await user.save();
 
     res.json({
       success: true,
       data: updatedUser
+    });
+  });
+
+  // @desc    Get all developers
+  // @route   GET /api/users/developers
+  // @access  Public
+  getDevelopers = asyncHandler(async (req, res) => {
+    const developers = await User.find({ 
+      role: 'developer' 
+    }).select('-addressHash');
+
+    res.json({
+      success: true,
+      data: developers
     });
   });
 }
