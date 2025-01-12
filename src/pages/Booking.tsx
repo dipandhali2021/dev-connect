@@ -190,9 +190,7 @@ export const Booking = () => {
   };
 
 
-  const handleMeetingEnd = () => {
-    console.log('The meeting has ended.');
-  };
+
 
   const availableTimeSlots = getAvailableTimesForDate(selectedDate);
 
@@ -464,12 +462,11 @@ export const Booking = () => {
 
                 <div className="bg-primary-600/10 p-4 rounded-xl">
                   <MeetingRoom
-                    bookingId="67829430e53da6b71e3733a3"
-                    duration={duration * 60}
-                    startTime={
-                      new Date(`${selectedDate.toDateString()} ${selectedTime}`)
-                    }
-                    onMeetingEnd={handleMeetingEnd}
+                    bookingId={bookingData._id}
+                    developerId={developer._id}
+                    duration={bookingData.duration}
+                    startDate={bookingData.date}
+                    startTime={bookingData?.time}
                   />
                 </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Video,
@@ -16,88 +16,89 @@ import {
   CheckCircle2,
   Timer,
   Shield,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export const DeveloperDashboard = () => {
   const [activeNotifications, setActiveNotifications] = useState(3);
   const [selectedTimeframe, setSelectedTimeframe] = useState('week');
+  const [upcomingSessions, setUpcomingSessions] = useState([]);
 
-  const upcomingSessions = [
-    {
-      id: 1,
-      customer: "John Doe",
-      date: "2024-03-15",
-      time: "10:00 AM",
-      duration: 2,
-      rate: 120,
-      meetingLink: "https://meet.devconnect.com/session-123",
-      customerNotes: "Need help with React performance optimization",
-      status: "confirmed",
-      timeToSession: "2 days 4 hours"
-    },
-    {
-      id: 2,
-      customer: "Alice Smith",
-      date: "2024-03-16",
-      time: "2:00 PM",
-      duration: 1,
-      rate: 120,
-      meetingLink: "https://meet.devconnect.com/session-124",
-      customerNotes: "Code review for Node.js API",
-      status: "pending",
-      timeToSession: "3 days 8 hours"
-    }
-  ];
+  const { getProfile } = useAuth();
+
+  useEffect(() => {
+    const fetchUpcomingSessions = async () => {
+      try {
+        const data = await getProfile();
+
+        const response = await fetch(
+          `http://localhost:5000/api/meetings/${data._id}/upcoming`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setUpcomingSessions(data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch upcoming sessions:', error);
+      }
+    };
+
+    fetchUpcomingSessions();
+  }, []);
+
+  console.log(upcomingSessions);  
 
   const recentReviews = [
     {
       id: 1,
-      customer: "Michael Scott",
+      customer: 'Michael Scott',
       rating: 5,
-      comment: "Excellent session! Very helpful and knowledgeable.",
-      date: "2024-03-10",
-      skills: ["React", "Performance"],
-      reply: "Thank you for the kind words! Looking forward to our next session."
+      comment: 'Excellent session! Very helpful and knowledgeable.',
+      date: '2024-03-10',
+      skills: ['React', 'Performance'],
+      reply:
+        'Thank you for the kind words! Looking forward to our next session.',
     },
     {
       id: 2,
-      customer: "Lisa Chen",
+      customer: 'Lisa Chen',
       rating: 4,
-      comment: "Great communication and problem-solving skills.",
-      date: "2024-03-08",
-      skills: ["Node.js", "API Design"],
-      reply: null
-    }
+      comment: 'Great communication and problem-solving skills.',
+      date: '2024-03-08',
+      skills: ['Node.js', 'API Design'],
+      reply: null,
+    },
   ];
 
   const earnings = {
     total: 2880,
     pending: 450,
     monthly: 1200,
-    trend: "+15%",
+    trend: '+15%',
     transactions: [
       {
         id: 1,
         amount: 240,
-        status: "completed",
-        date: "2024-03-10",
-        customer: "John Doe"
+        status: 'completed',
+        date: '2024-03-10',
+        customer: 'John Doe',
       },
       {
         id: 2,
         amount: 120,
-        status: "pending",
-        date: "2024-03-09",
-        customer: "Alice Smith"
-      }
-    ]
+        status: 'pending',
+        date: '2024-03-09',
+        customer: 'Alice Smith',
+      },
+    ],
   };
 
   const skillStats = [
-    { name: "React", sessions: 15, rating: 4.9 },
-    { name: "Node.js", sessions: 12, rating: 4.8 },
-    { name: "TypeScript", sessions: 8, rating: 4.7 }
+    { name: 'React', sessions: 15, rating: 4.9 },
+    { name: 'Node.js', sessions: 12, rating: 4.8 },
+    { name: 'TypeScript', sessions: 8, rating: 4.7 },
   ];
 
   return (
@@ -108,32 +109,32 @@ export const DeveloperDashboard = () => {
           {[
             {
               icon: Video,
-              label: "Upcoming Sessions",
-              value: "3",
-              trend: "+2 this week",
-              color: "blue"
+              label: 'Upcoming Sessions',
+              value: '3',
+              trend: '+2 this week',
+              color: 'blue',
             },
             {
               icon: Clock,
-              label: "Hours Completed",
-              value: "24",
-              trend: "85% completion rate",
-              color: "green"
+              label: 'Hours Completed',
+              value: '24',
+              trend: '85% completion rate',
+              color: 'green',
             },
             {
               icon: DollarSign,
-              label: "Total Earnings",
-              value: "$2,880",
+              label: 'Total Earnings',
+              value: '$2,880',
               trend: earnings.trend,
-              color: "purple"
+              color: 'purple',
             },
             {
               icon: Star,
-              label: "Average Rating",
-              value: "4.9",
-              trend: "Top 5% of developers",
-              color: "yellow"
-            }
+              label: 'Average Rating',
+              value: '4.9',
+              trend: 'Top 5% of developers',
+              color: 'yellow',
+            },
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
@@ -217,7 +218,7 @@ export const DeveloperDashboard = () => {
                 <div className="space-y-4">
                   {upcomingSessions.map((session) => (
                     <div
-                      key={session.id}
+                      key={session._id}
                       className="bg-gray-50 dark:bg-dark-200 rounded-xl p-4 border border-gray-200 dark:border-primary-600/20"
                     >
                       <div className="flex items-center justify-between mb-3">
@@ -227,52 +228,67 @@ export const DeveloperDashboard = () => {
                           </div>
                           <div>
                             <h3 className="font-medium text-gray-900 dark:text-white">
-                              {session.customer}
+                              {session.bookingId.customer.name}
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-primary-100">
-                              {session.customerNotes}
+                              {session.bookingId.topic}
                             </p>
                           </div>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          session.status === 'confirmed'
-                            ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-                            : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
-                        }`}>
-                          {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            session.status === 'scheduled'
+                              ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                              : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
+                          }`}
+                        >
+                          {session.status.charAt(0).toUpperCase() +
+                            session.status.slice(1)}
                         </span>
                       </div>
                       <div className="flex items-center gap-4 mb-3">
                         <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-primary-100">
                           <Calendar className="w-4 h-4" />
-                          <span>{session.date}</span>
+                          <span>
+                            {new Date(session.startTime).toLocaleDateString()}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-primary-100">
                           <Clock className="w-4 h-4" />
-                          <span>{session.time}</span>
+                          <span>
+                            {new Date(session.startTime).toLocaleTimeString(
+                              [],
+                              {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }
+                            )}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-primary-100">
                           <Timer className="w-4 h-4" />
-                          <span>In {session.timeToSession}</span>
+                          <span>{session.duration} hour(s)</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
-                          ${session.rate * session.duration}
+                          ${session.bookingId.totalAmount}
                         </span>
                         <div className="flex gap-2">
                           <button className="px-4 py-2 bg-gray-100 dark:bg-dark-100 text-gray-700 dark:text-primary-100 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-200 transition-colors">
                             View Details
                           </button>
-                          <a
-                            href={session.meetingLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors flex items-center gap-1"
-                          >
-                            Join Meeting
-                            <ArrowUpRight className="w-4 h-4" />
-                          </a>
+                          {new Date(session.startTime).getTime() -
+                            new Date().getTime() <=
+                            300000 && (
+                            <a
+                              href={`/meeting/${session._id}`}
+                              className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors flex items-center gap-1"
+                            >
+                              Join Meeting
+                              <ArrowUpRight className="w-4 h-4" />
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -303,7 +319,9 @@ export const DeveloperDashboard = () => {
               <div className="flex items-center gap-2 text-primary-100">
                 <span className="text-sm">Pending: ${earnings.pending}</span>
                 <span className="text-sm">•</span>
-                <span className="text-sm">Available: ${earnings.total - earnings.pending}</span>
+                <span className="text-sm">
+                  Available: ${earnings.total - earnings.pending}
+                </span>
               </div>
               <button className="w-full mt-4 py-2 bg-white text-primary-600 rounded-lg font-medium hover:bg-white/90 transition-colors">
                 Withdraw Funds

@@ -17,9 +17,7 @@ export const useMeeting = (bookingId: string) => {
     const fetchMeeting = async () => {
       try {
         const response = await fetch(`http://localhost:5000/api/meetings/${bookingId}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
+          
         });
 
         if (!response.ok) {
@@ -50,9 +48,7 @@ export const useMeeting = (bookingId: string) => {
     try {
       await fetch(`http://localhost:5000/api/meetings/${bookingId}/join`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        
       });
     } catch (err) {
       console.error('Failed to join meeting:', err);
@@ -63,9 +59,7 @@ export const useMeeting = (bookingId: string) => {
     try {
       await fetch(`http://localhost:5000/api/meetings/${bookingId}/end`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        
       });
     } catch (err) {
       console.error('Failed to end meeting:', err);

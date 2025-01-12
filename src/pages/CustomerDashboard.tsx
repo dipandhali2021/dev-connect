@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Video,
@@ -15,91 +15,98 @@ import {
   Filter,
   ChevronRight,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export const CustomerDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState('week');
+  const [upcomingSessions, setUpcomingSessions] = useState([]);
+  const [developerProfile, setDeveloperProfile] = useState([]);
+ const {getProfile} =useAuth();
+  
+  useEffect(() => {
+    const fetchUpcomingSessions = async () => {
+      try {
+        const data = await getProfile();
+        
+        const response = await fetch(
+          `http://localhost:5000/api/meetings/${data._id}/upcoming`,
+      
+        );
 
-  const upcomingSessions = [
-    {
-      id: 1,
-      developer: {
-        name: "Sarah Chen",
-        image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop",
-        rating: 4.9
-      },
-      date: "2024-03-15",
-      time: "10:00 AM",
-      duration: 2,
-      rate: 120,
-      topic: "React Performance Optimization",
-      meetingLink: "https://meet.devconnect.com/session-123",
-      timeToSession: "2 days 4 hours",
-      status: "confirmed",
-      preparationChecklist: [
-        { id: 1, task: "Share codebase access", completed: true },
-        { id: 2, task: "List specific performance issues", completed: false },
-        { id: 3, task: "Prepare test environment", completed: false }
-      ]
-    }
-  ];
+
+        if (response.ok) {
+          const data = await response.json();
+          setUpcomingSessions(data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch upcoming sessions:', error);
+      }
+    };
+
+    fetchUpcomingSessions();
+  }, []);
+
 
   const pastSessions = [
     {
       id: 1,
       developer: {
-        name: "Alex Rodriguez",
-        image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
-        rating: 4.8
+        name: 'Alex Rodriguez',
+        image:
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
+        rating: 4.8,
       },
-      date: "2024-03-10",
+      date: '2024-03-10',
       duration: 1,
       rate: 150,
-      topic: "API Architecture Review",
-      status: "completed",
+      topic: 'API Architecture Review',
+      status: 'completed',
       feedback: {
         rating: 5,
-        comment: "Alex provided excellent insights on optimizing our API structure. Very knowledgeable!"
-      }
+        comment:
+          'Alex provided excellent insights on optimizing our API structure. Very knowledgeable!',
+      },
     },
     {
       id: 2,
       developer: {
-        name: "Emily Johnson",
-        image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop",
-        rating: 4.7
+        name: 'Emily Johnson',
+        image:
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
+        rating: 4.7,
       },
-      date: "2024-03-08",
+      date: '2024-03-08',
       duration: 2,
       rate: 100,
-      topic: "UI/UX Implementation",
-      status: "completed",
-      feedback: null
-    }
+      topic: 'UI/UX Implementation',
+      status: 'completed',
+      feedback: null,
+    },
   ];
 
   const notifications = [
     {
       id: 1,
-      type: "reminder",
-      message: "Upcoming session with Sarah Chen in 2 days",
-      time: "1 hour ago"
+      type: 'reminder',
+      message: 'Upcoming session with Sarah Chen in 2 days',
+      time: '1 hour ago',
     },
     {
       id: 2,
-      type: "system",
-      message: "Your last session recording is now available",
-      time: "3 hours ago"
-    }
+      type: 'system',
+      message: 'Your last session recording is now available',
+      time: '3 hours ago',
+    },
   ];
 
   const stats = {
     totalSpent: 650,
     totalHours: 5,
     averageRating: 4.8,
-    completedSessions: 8
+    completedSessions: 8,
   };
 
   return (
@@ -113,8 +120,12 @@ export const CustomerDashboard = () => {
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-2">Welcome back!</h1>
-              <p className="text-primary-100">Your next session is scheduled in 2 days</p>
+              <h1 className="text-2xl md:text-3xl font-bold mb-2">
+                Welcome back!
+              </h1>
+              <p className="text-primary-100">
+                Your next session is scheduled in 2 days
+              </p>
             </div>
             <div className="flex gap-4">
               <button className="px-4 py-2 bg-white/10 rounded-xl hover:bg-white/20 transition-colors flex items-center gap-2">
@@ -134,32 +145,32 @@ export const CustomerDashboard = () => {
           {[
             {
               icon: Video,
-              label: "Upcoming Sessions",
-              value: "1",
-              trend: "Next: In 2 days",
-              color: "blue"
+              label: 'Upcoming Sessions',
+              value: '1',
+              trend: 'Next: In 2 days',
+              color: 'blue',
             },
             {
               icon: Clock,
-              label: "Total Hours",
+              label: 'Total Hours',
               value: stats.totalHours.toString(),
-              trend: "+2 this month",
-              color: "green"
+              trend: '+2 this month',
+              color: 'green',
             },
             {
               icon: DollarSign,
-              label: "Total Spent",
+              label: 'Total Spent',
               value: `$${stats.totalSpent}`,
-              trend: "Under budget",
-              color: "purple"
+              trend: 'Under budget',
+              color: 'purple',
             },
             {
               icon: Star,
-              label: "Avg. Session Rating",
+              label: 'Avg. Session Rating',
               value: stats.averageRating.toString(),
-              trend: "Excellent",
-              color: "yellow"
-            }
+              trend: 'Excellent',
+              color: 'yellow',
+            },
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
@@ -219,29 +230,27 @@ export const CustomerDashboard = () => {
                 <div className="space-y-4">
                   {upcomingSessions.map((session) => (
                     <div
-                      key={session.id}
+                      key={session._id}
                       className="bg-gray-50 dark:bg-dark-200 rounded-xl p-4 border border-gray-200 dark:border-primary-600/20"
                     >
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <img
-                            src={session.developer.image}
-                            alt={session.developer.name}
+                            src={session.bookingId.developer.imageUrl}
+                            alt={session.bookingId.developer.name}
                             className="w-12 h-12 rounded-xl object-cover"
                           />
                           <div>
                             <h3 className="font-medium text-gray-900 dark:text-white">
-                              {session.developer.name}
+                              {session.bookingId.developer.name}
                             </h3>
-                            <p className="text-sm text-gray-600 dark:text-primary-100">
-                              {session.topic}
-                            </p>
+                            
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Star className="w-4 h-4 text-yellow-400 fill-current" />
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {session.developer.rating}
+                            {session.bookingId.developer.rating || 0}
                           </span>
                         </div>
                       </div>
@@ -249,69 +258,55 @@ export const CustomerDashboard = () => {
                       <div className="flex flex-wrap gap-4 mb-4">
                         <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-primary-100">
                           <Calendar className="w-4 h-4" />
-                          <span>{session.date}</span>
+                          <span>
+                            {new Date(session.startTime).toLocaleDateString()}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-primary-100">
                           <Clock className="w-4 h-4" />
-                          <span>{session.time}</span>
+                          <span>
+                            {new Date(session.startTime).toLocaleTimeString(
+                              [],
+                              {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }
+                            )}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-primary-100">
                           <Timer className="w-4 h-4" />
-                          <span>In {session.timeToSession}</span>
-                        </div>
-                      </div>
-
-                      {/* Preparation Checklist */}
-                      <div className="bg-white dark:bg-dark-100 rounded-lg p-4 mb-4">
-                        <h4 className="font-medium text-gray-900 dark:text-white mb-3">
-                          Session Preparation
-                        </h4>
-                        <div className="space-y-2">
-                          {session.preparationChecklist.map((item) => (
-                            <div
-                              key={item.id}
-                              className="flex items-center gap-2 text-sm"
-                            >
-                              <div
-                                className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                                  item.completed
-                                    ? 'bg-green-500/10 text-green-500'
-                                    : 'bg-gray-100 dark:bg-dark-200 text-gray-400'
-                                }`}
-                              >
-                                <CheckCircle2 className="w-4 h-4" />
-                              </div>
-                              <span
-                                className={`${
-                                  item.completed
-                                    ? 'text-gray-600 dark:text-primary-100 line-through'
-                                    : 'text-gray-900 dark:text-white'
-                                }`}
-                              >
-                                {item.task}
-                              </span>
-                            </div>
-                          ))}
+                          <span>
+                            In{' '}
+                            {Math.floor(
+                              (new Date(session.startTime).getTime() -
+                                new Date().getTime()) /
+                                (1000 * 60)
+                            )}{' '}
+                            minutes
+                          </span>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
-                          ${session.rate * session.duration}
+                          ${session.bookingId.totalAmount}
                         </span>
                         <div className="flex gap-2">
                           <button className="px-4 py-2 bg-gray-100 dark:bg-dark-100 text-gray-700 dark:text-primary-100 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-dark-200 transition-colors">
-                            Reschedule
+                            View Details
                           </button>
-                          <a
-                            href={session.meetingLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors flex items-center gap-1"
-                          >
-                            Join Meeting
-                            <ArrowUpRight className="w-4 h-4" />
-                          </a>
+                          {new Date(session.startTime).getTime() -
+                            new Date().getTime() <=
+                            300000 && (
+                            <a
+                              href={`/meeting/${session._id}`}
+                              className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors flex items-center gap-1"
+                            >
+                              Join Meeting
+                              <ArrowUpRight className="w-4 h-4" />
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -406,7 +401,9 @@ export const CustomerDashboard = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-primary-100">Total Sessions</span>
-                  <span className="font-semibold">{stats.completedSessions}</span>
+                  <span className="font-semibold">
+                    {stats.completedSessions}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-primary-100">Hours Spent</span>

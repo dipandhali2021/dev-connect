@@ -146,6 +146,7 @@ class WebRTCService {
 
   async startCall(targetUserId: string) {
     const peerConnection = this.createPeerConnection(targetUserId);
+    console.log('Starting call with:', peerConnection);
     
     try {
       const offer = await peerConnection.connection.createOffer();

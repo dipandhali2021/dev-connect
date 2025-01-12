@@ -1,4 +1,4 @@
-import { WebSocketServer } from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
 
 class MeetingServer {
@@ -6,6 +6,12 @@ class MeetingServer {
     this.wss = new WebSocketServer({ server });
     this.rooms = new Map(); // roomId -> Set of connections
     this.setupWebSocket();
+  }
+
+  handleNewMeeting(meetingId) {
+    if (!this.rooms.has(meetingId)) {
+      this.rooms.set(meetingId, new Set());
+    }
   }
 
   setupWebSocket() {

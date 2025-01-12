@@ -27,11 +27,11 @@ app.use(cors({
   credentials: true
 }));
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use('/api', limiter);
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 100 // limit each IP to 100 requests per windowMs
+// });
+// app.use('/api', limiter);
 
 // Body Parser Middleware
 app.use(express.json({ limit: '10kb' }));
@@ -78,6 +78,7 @@ const server =  app.listen(PORT, () => {
 });
 
 
-
 // Initialize WebSocket server
-new MeetingServer(server);
+const wsServer = new MeetingServer(server);
+app.set('wsServer', wsServer); // Add this line
+

@@ -1,121 +1,141 @@
 import Meeting from '../models/Meeting.js';
-import GoogleMeetConfig from '../config/googleMeet.js';
-import { ApiError } from '../utils/ApiError.js';
 
 class MeetingService {
-  async createMeeting(meetingData) {
+  async createMeeting(bookingData) {
     try {
-      // Create Google Meet meeting
-      const { meetingUrl, meetingId } = await GoogleMeetConfig.createMeeting({
-        audio: true,
-        video: true,
-        chat: true
-      });
-
-      console.log(meetingUrl);
-
       // Calculate end time based on duration
-      const startTime = new Date(meetingData.startTime);
-      const endTime = new Date(startTime.getTime() + meetingData.duration * 60 * 60 * 1000);
+      const startTime = new Date(bookingData.startTime);
+      const endTime = new Date(startTime.getTime() + bookingData.duration * 60 * 60 * 1000);
 
-      // Create meeting in database
-      const meeting = await Meeting.create({
-        ...meetingData,
-        meetingUrl,
-        meetingId,
+      // Create meeting record in database
+      const meeting = new Meeting({
+        bookingId: bookingData.bookingId,
+        startTime,
         endTime,
+        duration: bookingData.duration,
         participants: [
           {
-            userId: meetingData.createdBy,
-            role: 'developer',
+            userId: bookingData.developerId,
+            role: 'developer'
+          },
+          {
+            userId: bookingData.customerId,
+            role: 'customer'
           }
         ]
-      }); 
-      console.log(meeting);
-
-      return meeting;
-    } catch (error) {
-      console.error('Error in meeting service:', error);
-      throw new ApiError(500, 'Failed to create meeting');
-    }
-  }
-
-  async getMeetingById(meetingId) {
-    try {
-      const meeting = await Meeting.findById(meetingId)
-        .populate('participants.userId', 'name email')
-        .populate('createdBy', 'name email');
-
-      if (!meeting) {
-        throw new ApiError(404, 'Meeting not found');
-      }
-
-      return meeting;
-    } catch (error) {
-      console.error('Error getting meeting:', error);
-      throw new ApiError(500, 'Failed to get meeting details');
-    }
-  }
-
-  async endMeeting(meetingId) {
-    try {
-      const meeting = await Meeting.findByIdAndUpdate(
-        meetingId,
-        {
-          status: 'completed',
-          updatedAt: new Date()
-        },
-        { new: true }
-      );
-
-      if (!meeting) {
-        throw new ApiError(404, 'Meeting not found');
-      }
-
-      return meeting;
-    } catch (error) {
-      console.error('Error ending meeting:', error);
-      throw new ApiError(500, 'Failed to end meeting');
-    }
-  }
-
-  async joinMeeting(meetingId, userId) {
-    try {
-      const meeting = await Meeting.findById(meetingId);
-
-      if (!meeting) {
-        throw new ApiError(404, 'Meeting not found');
-      }
-
-      if (meeting.status !== 'scheduled' && meeting.status !== 'ongoing') {
-        throw new ApiError(400, 'Meeting is not active');
-      }
-
-      const participant = meeting.participants.find(
-        p => p.userId.toString() === userId.toString()
-      );
-
-      if (!participant) {
-        meeting.participants.push({
-          userId,
-          role: 'customer',
-          joinedAt: new Date()
-        });
-      } else {
-        participant.joinedAt = new Date();
-      }
-
-      if (meeting.status === 'scheduled') {
-        meeting.status = 'ongoing';
-      }
+      });
 
       await meeting.save();
       return meeting;
-    } catch (error) {
-      console.error('Error joining meeting:', error);
-      throw new ApiError(500, 'Failed to join meeting');
+    } catch (err) {
+      console.error('Error in meeting service:', err);
+      throw err;
     }
   }
+
+  async updateMeetingStatus(meetingId, status) {
+    try {
+      const meeting = await Meeting.findByIdAndUpdate(
+        meetingId,
+        { status },
+        { new: true }
+      );
+      return meeting;
+    } catch (err) {
+      console.error('Error updating meeting status:', err);
+      throw err;
+    }
+  }
+
+  async recordParticipantJoin(meetingId, userId) {
+    try {
+      const meeting = await Meeting.findById(meetingId);
+      const participant = meeting.participants.find(p => p.userId.toString() === userId);
+      
+      if (participant) {
+        participant.joinedAt = new Date();
+        await meeting.save();
+      }
+      
+      return meeting;
+    } catch (err) {
+      console.error('Error recording participant join:', err);
+      throw err;
+    }
+  }
+
+  async recordParticipantLeave(meetingId, userId) {
+    try {
+      const meeting = await Meeting.findById(meetingId);
+      const participant = meeting.participants.find(p => p.userId.toString() === userId);
+      
+      if (participant) {
+        participant.leftAt = new Date();
+        await meeting.save();
+      }
+      
+      return meeting;
+    } catch (err) {
+      console.error('Error recording participant leave:', err);
+      throw err;
+    }
+  }
+
+  async getMeetingDetails(meetingId) {
+    try {
+      const meeting = await Meeting.findById(meetingId)
+        .populate('bookingId')
+        .populate('participants.userId');
+      return meeting;
+    } catch (err) {
+      console.error('Error getting meeting details:', err);
+      throw err;
+    }
+  }
+
+
+
+  async getUpcomingMeetings(userId) {
+    try {
+      const now = new Date();
+      const meetings = await Meeting.find({
+        'participants.userId': userId,
+        status: { $in: ['scheduled', 'ongoing'] },
+      })
+      .populate({
+        path: 'bookingId',
+        populate: [
+          { path: 'developer', select: 'name imageUrl rating _id' }, // Returns developer's MongoDB _id
+          { path: 'customer', select: 'name _id' } // Returns customer's MongoDB _id
+        ]
+      })
+      .sort({ startTime: 1 });
+
+      return meetings;
+    } catch (err) {
+      console.error('Error getting upcoming meetings:', err);
+      throw err;
+    }
+  }
+
+  async getMeetingByBookingId(bookingId) {
+    try {
+      const meeting = await Meeting.findOne({ bookingId })
+        .populate({
+          path: 'bookingId',
+          populate: [
+            { path: 'developer', select: 'name imageUrl rating' },
+            { path: 'customer', select: 'name' }
+          ]
+        });
+      return meeting;
+    } catch (err) {
+      console.error('Error getting meeting by booking ID:', err);
+      throw err;
+    }
+  }
+
+
 }
 
 export default new MeetingService();

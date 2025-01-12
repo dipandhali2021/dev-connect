@@ -1,79 +1,136 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, AlertCircle, X } from 'lucide-react';
-import { VideoCall } from './VideoCall';
+import { Clock, Users, Video, Mic, MicOff, VideoOff, PhoneOff, Shield, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { webRTCService } from '../services/webRTCService';
+import { VideoCall } from './VideoCall';
 
 interface MeetingRoomProps {
   bookingId: string;
   duration: number;
-  startTime: Date;
-  onMeetingEnd?: () => void;
+  startTime: string;
+  startDate: Date;
+  developerId: string;
 }
 
 export const MeetingRoom: React.FC<MeetingRoomProps> = ({
   bookingId,
   duration,
   startTime,
-  onMeetingEnd,
+  startDate,
+  developerId
 }) => {
+  const [timeLeft, setTimeLeft] = useState<string>('');
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(false);
   const [error, setError] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [roomId, setRoomId] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [meeting, setMeeting] = useState<any>(null);
   const { user } = useAuth();
 
+  const formatDateTime = (date: Date, time: string) => {
+    const timeStr = String(time);
+    const [rawTime, period] = timeStr.split(' ');
+    const [hours, minutes] = rawTime.split(':');
+    
+    let hour24 = parseInt(hours);
+    if (period === 'PM' && hour24 !== 12) hour24 += 12;
+    if (period === 'AM' && hour24 === 12) hour24 = 0;
+    
+    const dateObj = new Date(date);
+    dateObj.setHours(hour24);
+    dateObj.setMinutes(parseInt(minutes));
+    dateObj.setSeconds(0);
+    dateObj.setMilliseconds(0);
+    
+    return dateObj.toISOString();
+  }
+
+  useEffect(() => {
+    const initializeMeeting = async () => {
+      try {
+        setIsLoading(true);
+
+        // First check if meeting exists
+        const checkResponse = await fetch(`http://localhost:5000/api/meetings/booking/${bookingId}`, {
+          
+        });
+        const checkData = await checkResponse.json();
+        if (checkData.data) {
+          // Meeting exists, use it
+          setMeeting(checkData.data);
+        } else {
+          // Create new meeting if none exists
+          const formattedDateTime = formatDateTime(startDate, startTime);
+          
+          const response = await fetch('http://localhost:5000/api/meetings', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              bookingId,
+              startTime: formattedDateTime,
+              duration,
+              createdBy: user?._id,
+              meetingUrl: `https://meet.devconnect.com/${bookingId}`,
+              participants: [
+                {
+                  userId: user?._id,
+                  role: user?.role
+                },
+                {
+                  userId: developerId,
+                  role: 'developer'
+                }
+              ]
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to create meeting');
+          }
+
+          const data = await response.json();
+          setMeeting(data.data);
+        }
+
+        // Initialize WebRTC
+        await webRTCService.initialize(bookingId, user?._id || '');
+
+      } catch (err: any) {
+        setError(err.message || 'Failed to initialize meeting room');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user) {
+      initializeMeeting();
+    }
+
+    return () => {
+      webRTCService.disconnect();
+    };
+  }, [bookingId, startTime, duration, user, startDate, developerId]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen pt-16 bg-gray-50 dark:bg-dark-200 flex items-center justify-center">
-        <div className="flex items-center gap-4">
-          <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-600 dark:text-primary-100">
-            Creating meeting room...
-          </p>
-        </div>
-      </div>
-    );
+    return <div>Loading meeting room...</div>;
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen pt-16 bg-gray-50 dark:bg-dark-200 flex items-center justify-center">
-        <div className="bg-red-500/10 p-4 rounded-xl flex items-center gap-3 text-red-600 dark:text-red-400">
-          <AlertCircle className="w-5 h-5" />
-          <p>{error}</p>
-        </div>
-      </div>
-    );
+    return <div>Error: {error}</div>;
+  }
+
+  if (!meeting) {
+    return <div>No meeting found</div>;
   }
 
   return (
-    <div className="min-h-screen pt-16 bg-gray-50 dark:bg-dark-200">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-dark-100 rounded-2xl shadow-xl overflow-hidden"
-        >
-          <div className="h-[calc(100vh-200px)]">
-            <VideoCall
-              roomId={roomId}
-              userId={user?._id || ''}
-              userName={user?.name || ''}
-              onEnd={onMeetingEnd}
-            />
-          </div>
-
-          {/* Security Notice */}
-          <div className="p-4 bg-primary-600/10 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-            <p className="text-sm text-primary-600 dark:text-primary-400">
-              This meeting is secure and encrypted. Only authorized participants
-              can join.
-            </p>
-          </div>
-        </motion.div>
-      </div>
-    </div>
+    <VideoCall
+      roomId={bookingId}
+      userId={user?._id || ''}
+      userName={user?.name || ''}
+    />
   );
 };

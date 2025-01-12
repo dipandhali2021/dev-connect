@@ -19,14 +19,12 @@ interface VideoCallProps {
   roomId: string;
   userId: string;
   userName: string;
-  onEnd?: () => void;
 }
 
 export const VideoCall: React.FC<VideoCallProps> = ({
   roomId,
   userId,
   userName,
-  onEnd,
 }) => {
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -91,7 +89,6 @@ export const VideoCall: React.FC<VideoCallProps> = ({
 
   const handleEndCall = () => {
     webRTCService.disconnect();
-    onEnd?.();
   };
 
   const handleSendMessage = () => {
