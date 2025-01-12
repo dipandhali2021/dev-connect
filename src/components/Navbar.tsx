@@ -26,9 +26,8 @@ export const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <Code2 className="h-8 w-8 text-primary-600 dark:text-primary-400" />
               <span className="text-xl font-bold text-gray-900 dark:text-white">
-                DevConnect
+                SYNERGY
               </span>
             </Link>
           </div>

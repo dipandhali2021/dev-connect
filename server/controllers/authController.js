@@ -76,7 +76,7 @@ class AuthController {
     }
 
     // Verify the signature
-    const message = `Welcome to DevConnect!\n\nPlease sign this message to verify your wallet ownership.\n\nNonce: ${generateNonce()}`;
+    const message = `Welcome to Synergy!\n\nPlease sign this message to verify your wallet ownership.\n\nNonce: ${generateNonce()}`;
     const recoveredAddress = ethers.verifyMessage(message, signature);
 
     // Check if user exists

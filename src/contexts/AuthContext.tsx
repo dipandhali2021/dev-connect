@@ -114,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const address = await signer.getAddress();
 
       // Sign message for verification
-      const message = `Welcome to DevConnect!\n\nPlease sign this message to verify your wallet ownership.\n\nNonce: ${Math.floor(
+      const message = `Welcome to Synergy!\n\nPlease sign this message to verify your wallet ownership.\n\nNonce: ${Math.floor(
         Math.random() * 1000000
       )}`;
       const signature = await signer.signMessage(message);
