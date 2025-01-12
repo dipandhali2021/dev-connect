@@ -61,7 +61,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
 
         // First check if meeting exists
         const checkResponse = await fetch(
-          `https://synergy-hub.onrender.com/api/meetings/booking/${bookingId}`,
+          `http://localhost:5000/api/meetings/booking/${bookingId}`,
           {}
         );
         const checkData = await checkResponse.json();
@@ -72,7 +72,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
           // Create new meeting if none exists
           const formattedDateTime = formatDateTime(startDate, startTime);
 
-          const response = await fetch('https://synergy-hub.onrender.com/api/meetings', {
+          const response = await fetch('http://localhost:5000/api/meetings', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
