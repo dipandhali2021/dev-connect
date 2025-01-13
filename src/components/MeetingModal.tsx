@@ -83,7 +83,7 @@ export const MeetingModal = ({
             <div className="h-full pt-16 z-50">
               <iframe
                 title="Video"
-                src={`react-twilio-serverlessv2-9257-dev.twil.io/index.html`}
+                src={`https://video-call-app-uamc.vercel.app/room/${meetingData.bookingId}`}
                 className="w-full h-full"
                 allow="camera; microphone"
               />
