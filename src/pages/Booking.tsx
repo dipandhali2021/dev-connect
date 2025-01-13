@@ -56,7 +56,13 @@ export const Booking = () => {
     const fetchDeveloper = async () => {
       try {
         const response = await fetch(
-          `https://synergy-hub.onrender.com/api/users/developers/${developerId}`
+          `https://synergy-hub.onrender.com/api/users/developers/${developerId}`,{
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+          }
         );
         if (!response.ok) {
           throw new Error('Failed to fetch developer details');

@@ -54,8 +54,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check if user is already authenticated
     const checkAuth = async () => {
       try {
+        const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/api/auth/me`, {
           credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${token}` // Add token to headers
+          }
         });
         if (response.ok) {
           const data = await response.json();
@@ -90,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Add token to headers
         },
         credentials: 'include',
         body: JSON.stringify({ address }),
@@ -123,6 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` 
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -160,6 +166,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await fetch(`${API_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Add token to headers
+        }
       });
       setUser(null);
       navigate('/');
@@ -170,8 +179,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getProfile = async (): Promise<UserProfile> => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/api/users/profile`, {
         credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${token}` // Add token to headers
+        }
       });
 
       if (!response.ok) {

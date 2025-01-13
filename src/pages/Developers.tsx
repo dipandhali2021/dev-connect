@@ -28,7 +28,13 @@ export const Developers = () => {
   useEffect(() => {
     const fetchDevelopers = async () => {
       try {
-        const response = await fetch('https://synergy-hub.onrender.com/api/users/developers');
+        const response = await fetch('https://synergy-hub.onrender.com/api/users/developers',{
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}` 
+          }
+        });
         const data = await response.json();
         if (data.success) {
           setDevelopers(data.data);

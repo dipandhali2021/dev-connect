@@ -81,7 +81,13 @@ export const CustomerDashboard = () => {
         const data = await getProfile();
 
         const response = await fetch(
-          `https://synergy-hub.onrender.com/api/meetings/${data._id}/upcoming`
+          `https://synergy-hub.onrender.com/api/meetings/${data._id}/upcoming`,{
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            }
+          }
         );
 
         if (response.ok) {

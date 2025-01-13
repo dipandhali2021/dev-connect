@@ -53,16 +53,21 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
 
     return dateObj.toISOString();
   };
-
+  const token = localStorage.getItem('token');
   useEffect(() => {
     const initializeMeeting = async () => {
       try {
         setIsLoading(true);
-
         // First check if meeting exists
         const checkResponse = await fetch(
           `https://synergy-hub.onrender.com/api/meetings/booking/${bookingId}`,
-          {}
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`, // Add token to headers
+            },
+          }
         );
         const checkData = await checkResponse.json();
         if (checkData.data) {
@@ -72,29 +77,33 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
           // Create new meeting if none exists
           const formattedDateTime = formatDateTime(startDate, startTime);
 
-          const response = await fetch('https://synergy-hub.onrender.com/api/meetings', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              bookingId,
-              startTime: formattedDateTime,
-              duration,
-              createdBy: user?._id,
-              meetingUrl: `react-twilio-serverlessv2-9257-dev.twil.io/index.html/room/${bookingId}`,
-              participants: [
-                {
-                  userId: user?._id,
-                  role: user?.role,
-                },
-                {
-                  userId: developerId,
-                  role: 'developer',
-                },
-              ],
-            }),
-          });
+          const response = await fetch(
+            'https://synergy-hub.onrender.com/api/meetings',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                bookingId,
+                startTime: formattedDateTime,
+                duration,
+                createdBy: user?._id,
+                meetingUrl: `react-twilio-serverlessv2-9257-dev.twil.io/index.html/room/${bookingId}`,
+                participants: [
+                  {
+                    userId: user?._id,
+                    role: user?.role,
+                  },
+                  {
+                    userId: developerId,
+                    role: 'developer',
+                  },
+                ],
+              }),
+            }
+          );
 
           if (!response.ok) {
             throw new Error('Failed to create meeting');
@@ -103,7 +112,6 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
           const data = await response.json();
           setMeeting(data.data);
         }
-
       } catch (err: any) {
         setError(err.message || 'Failed to initialize meeting room');
       } finally {
@@ -114,8 +122,6 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     if (user) {
       initializeMeeting();
     }
-
-    
   }, [bookingId, startTime, duration, user, startDate, developerId]);
 
   if (isLoading) {
@@ -131,6 +137,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
   }
 
   return (
-  <h1 className='text-white font-bold'>Meeting url created: {meeting.meetingUrl}</h1>
+    <h1 className="text-white font-bold">
+      Meeting url created: {meeting.meetingUrl}
+    </h1>
   );
 };

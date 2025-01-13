@@ -17,7 +17,11 @@ export const useMeeting = (bookingId: string) => {
     const fetchMeeting = async () => {
       try {
         const response = await fetch(`https://synergy-hub.onrender.com/api/meetings/${bookingId}`, {
-          
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}` 
+          }
         });
 
         if (!response.ok) {
@@ -48,6 +52,10 @@ export const useMeeting = (bookingId: string) => {
     try {
       await fetch(`https://synergy-hub.onrender.com/api/meetings/${bookingId}/join`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
         
       });
     } catch (err) {
@@ -59,6 +67,10 @@ export const useMeeting = (bookingId: string) => {
     try {
       await fetch(`https://synergy-hub.onrender.com/api/meetings/${bookingId}/end`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
         
       });
     } catch (err) {
