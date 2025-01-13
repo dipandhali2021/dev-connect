@@ -42,7 +42,7 @@ export const DeveloperDashboard = () => {
         const data = await getProfile();
 
         const response = await fetch(
-          `http://localhost:5000/api/meetings/${data._id}/upcoming`
+          `https://synergy-hub.onrender.com/api/meetings/${data._id}/upcoming`
         );
 
         if (response.ok) {

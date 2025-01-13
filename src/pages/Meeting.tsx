@@ -13,7 +13,7 @@ export const Meeting = () => {
   useEffect(() => {
     const fetchMeeting = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/meetings/${meetingId}`);
+        const response = await fetch(`https://synergy-hub.onrender.com/api/meetings/${meetingId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch meeting details');
         }

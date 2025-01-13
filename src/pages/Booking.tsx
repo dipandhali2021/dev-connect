@@ -56,7 +56,7 @@ export const Booking = () => {
     const fetchDeveloper = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/users/developers/${developerId}`
+          `https://synergy-hub.onrender.com/api/users/developers/${developerId}`
         );
         if (!response.ok) {
           throw new Error('Failed to fetch developer details');
@@ -131,7 +131,7 @@ export const Booking = () => {
       setIsProcessingBooking(true);
       setShowPayment(false);
 
-      const response = await fetch('http://localhost:5000/api/bookings', {
+      const response = await fetch('https://synergy-hub.onrender.com/api/bookings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
