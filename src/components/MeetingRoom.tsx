@@ -90,7 +90,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                 startTime: formattedDateTime,
                 duration,
                 createdBy: user?._id,
-                meetingUrl: `react-twilio-serverlessv2-9257-dev.twil.io/index.html/room/${bookingId}`,
+                meetingUrl: `https://video-call-app-uamc.vercel.app/room/${bookingId}`,
                 participants: [
                   {
                     userId: user?._id,
